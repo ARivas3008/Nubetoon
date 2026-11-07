@@ -767,3 +767,7 @@ body[data-page="listas"] .shared-list-invite{
 
 /* Catálogo ampliado mediante feeds públicos, sin interrumpir la UI existente. */
 .catalog-api-note{font-size:11px;color:#ad9bd8;margin:5px 0 0;line-height:1.4;max-width:470px}
+
+/* Catálogo de VideoAPI: paginación progresiva para dispositivos móviles. */
+.catalog-pagination{display:flex;justify-content:center;margin:25px 0 10px}
+.catalog-pagination .btn{min-height:42px;padding:11px 19px;font-size:12px}

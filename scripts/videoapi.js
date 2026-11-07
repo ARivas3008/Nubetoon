@@ -139,7 +139,7 @@
       if(!response.ok)throw new Error('Feed not found');
       const raw=await response.json();
       const entries=Array.isArray(raw.items)?raw.items:[];
-      return {items:entries.slice(0,180).map(x=>fromFeed(x,x.type)).filter(Boolean),
+      return {items:entries.slice(0,250).map(x=>fromFeed(x,x.type)).filter(Boolean),
         updated:typeof raw.updated==='string'?raw.updated:null,
         source:raw.source||'snapshot',stats:raw.stats||null};
     }catch{return {items:[],updated:null,source:'unavailable',stats:null}}

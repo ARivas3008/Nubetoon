@@ -49,17 +49,32 @@
     render();refreshImages(collection,render);
   }
   function mountCatalog(){
-    let filter='Todas',sort='recommended',query='',results=[];let searchSeq=0;
+    let filter='Todas',sort='recommended',query='',results=[];let searchSeq=0,pageSize=24;
     const genres=['Todas','Acción','Aventura','Fantasía','Misterio','Comedia','Anime','Película','Novela','WWE'];
     const chipWrap=$('genreChips');
-    for(const name of genres){const b=NT.el('button',{type:'button',class:'chip'+(filter===name?' is-active':'')},tr(name));b.addEventListener('click',()=>{filter=name;chipWrap.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===b));render();});chipWrap.append(b);}
+    for(const name of genres){const b=NT.el('button',{type:'button',class:'chip'+(filter===name?' is-active':'')},tr(name));b.addEventListener('click',()=>{filter=name;pageSize=24;chipWrap.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===b));render();});chipWrap.append(b);}
     function filtered(){const q=NT.normalize(query);const items=collection.filter(i=>{
       const t=NT.normalize([i.title,i.year,...i.genres].join(' '));
       const matchText=!q||t.includes(q);
       const matchType=filter==='Todas'||filter==='Anime'&&i.type==='anime'||filter==='Película'&&i.type==='movie'||filter==='Novela'&&i.type==='novel'||filter==='WWE'&&i.type==='wwe'||i.genres.some(g=>NT.normalize(g)===NT.normalize(filter));
       return matchText&&matchType;
     });if(sort==='az')items.sort((a,b)=>a.title.localeCompare(b.title,'es'));if(sort==='latest')items.sort((a,b)=>b.year-a.year);return items;}
-    function render(){const visible=filtered();showCards($('catalogGrid'),visible);$('localEmpty').hidden=visible.length!==0;$('resultsInfo').textContent=tr('{n} títulos en tu biblioteca',{n:visible.length});}
+    function render(){
+      const visible=filtered();
+      showCards($('catalogGrid'),visible.slice(0,pageSize));
+      $('localEmpty').hidden=visible.length!==0;
+      $('resultsInfo').textContent=tr('{n} títulos en tu biblioteca',{n:visible.length});
+      const more=$('catalogLoadMore');
+      if(more){
+        more.hidden=pageSize>=visible.length;
+        more.textContent=tr('Cargar más títulos');
+      }
+    }
+    $('catalogLoadMore')?.addEventListener('click',()=>{pageSize+=24;render();});
+    const providerCount=collection.filter(x=>x.source==='videoapi').length;
+    if($('externalCatalogNote'))$('externalCatalogNote').textContent=providerCount
+      ?tr('{n} títulos del catálogo público ampliado',{n:providerCount})
+      :tr('Catálogo público adicional temporalmente no disponible.');
     const search=$('catalogSearch');
     async function remoteLookup(text){const seq=++searchSeq;const remote=$('remoteSection');if(text.length<2){remote.hidden=true;results=[];return;}
       remote.hidden=false;$('remoteStatus').textContent=tr('Consultando TVmaze…');$('remoteGrid').replaceChildren();
@@ -67,8 +82,8 @@
       catch {if(seq!==searchSeq)return;$('remoteStatus').textContent=tr('No se pudo conectar con TVmaze; tu biblioteca local sigue disponible.');}
     }
     const queryFromUrl=NT.params().get('q');if(queryFromUrl){search.value=queryFromUrl;query=search.value.trim();}
-    search.addEventListener('input',()=>{query=search.value.trim();render();clearTimeout(searchTimer);searchTimer=setTimeout(()=>remoteLookup(query),430);});
-    $('sortSelect').addEventListener('change',event=>{sort=event.target.value;render();});
+    search.addEventListener('input',()=>{query=search.value.trim();pageSize=24;render();clearTimeout(searchTimer);searchTimer=setTimeout(()=>remoteLookup(query),430);});
+    $('sortSelect').addEventListener('change',event=>{sort=event.target.value;pageSize=24;render();});
     const dialog=$('addDialog'),form=$('addTitleForm');
     $('addCustom').addEventListener('click',()=>dialog.showModal());
     $('closeAdd').addEventListener('click',()=>dialog.close());$('cancelAdd').addEventListener('click',()=>dialog.close());
