@@ -212,6 +212,20 @@
     if(selectedMedia){return}
     if(!items.length){
       notifyMedia(message||tr('No se encontraron títulos.'));
+      // Fallback honesto cuando un servicio externo de películas no responde.
+      // La ficha será local y no dispondrá de vídeo hasta tener un ID TMDb.
+      if(mediaKind==='movie' && NT.clean($('blogMediaSearch').value).length>=2){
+        const name=NT.clean($('blogMediaSearch').value).slice(0,120);
+        const fallback=NT.el('button',{type:'button',class:'blog-media-result blog-media-manual'});
+        fallback.append(NT.el('span',{class:'blog-media-result-icon','aria-hidden':'true'},'+'),
+          NT.el('span',{class:'blog-media-result-name'},tr('Crear ficha local de película')+': '+name));
+        fallback.addEventListener('click',()=>{
+          const media=NT.sanitize({id:'blog-movie-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),
+            title:name,type:'movie',art:'assets/art/default.svg',tag:'PERSONAL'});
+          if(media)chooseMedia(media);
+        });
+        result.append(fallback);
+      }
       return;
     }
     notifyMedia(tr('Selecciona un resultado para continuar.'));
