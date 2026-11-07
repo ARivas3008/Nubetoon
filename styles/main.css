@@ -764,3 +764,6 @@ body[data-page="listas"] .shared-list-invite{
   .shared-selected-poster{height:50px;width:34px}
   .shared-selected-move,.shared-selected-remove{height:26px;width:26px}
 }
+
+/* Catálogo ampliado mediante feeds públicos, sin interrumpir la UI existente. */
+.catalog-api-note{font-size:11px;color:#ad9bd8;margin:5px 0 0;line-height:1.4;max-width:470px}

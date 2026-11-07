@@ -129,3 +129,15 @@ La búsqueda de películas también dispone de una alternativa manual claramente
 El editor **«Comparte tus gustos»** permite buscar y agregar hasta veinte películas o series, reordenarlas y eliminarlas. Reutiliza TVmaze para series y Cinemeta para películas cuando sus servicios están disponibles; si no responden, sigue disponible el catálogo local. El resultado se guarda en `localStorage` (`nubetoon.shared-lists.v1`), con exportación JSON. Las listas creadas así son **locales** y no se comparten entre dispositivos automáticamente. Para hacerlas públicas, incorpora los datos exportados a `data/shared-lists.json` mediante commit. Incluye dos listas editoriales de inicio.
 
 La página de Inicio y la navegación tienen acceso a las listas; la vista de detalle ofrece compartir enlace solo cuando la lista ya es pública.
+
+
+## 14. API pública ampliada de VideoAPI
+
+Se recuperó el proyecto previo (incluyendo `original/index-original.html` en el ZIP del rediseño) y se contrastó con la documentación de VideoAPI: https://videoapi.la/api. El original solo integraba directamente los iframes `/e/movie/{tmdb}` y `/e/{tv|anime}/{tmdb}/{season}/{episode}`, además de reproducción local. La nueva integración mantiene el flujo actual de VideoAPI, sin volver a mostrar la selección de fuente al usuario, y amplía la capa de datos con las rutas públicas actualmente documentadas.
+
+- `scripts/videoapi.js`: construye embeds para `movie`, `tv`, `anime`, `novel` y `wwe`. Añade validación de configuración, verificación de existencia `/api/v1/public/exists/…`, estadísticas, feeds de películas/series/anime/novelas/WWE y feeds de episodios, y normalización segura de carátulas. Los parámetros públicos incluyen `subtitles`, `quality_selector`, `thumbnails`, `skip_intro` y colores de NubeToon. Estas funciones solo actúan cuando el proveedor dispone de datos y las permite.
+- `scripts/sync_videoapi.py`: obtiene metadatos paginados del catálogo público de VideoAPI y genera `data/videoapi-feed.json`. Se ejecuta en GitHub Actions al desplegar y diariamente mediante `schedule`; si la API falla, conserva el último JSON disponible y el catálogo local sigue operativo.
+- `scripts/core.js`: suma esos títulos al catálogo editorial y a los títulos personales. La búsqueda, las fichas, el Blog y las listas los reconocen mediante identificadores TMDb cuando el feed aporta metadatos.
+- `scripts/app.js`: solicita el embed con el contrato público de VideoAPI y consulta la disponibilidad del título/episodio sin bloquear la reproducción cuando no puede verificarse la API.
+
+**Límites:** el proveedor externo puede exigir autorización del dominio, no ofrecer CORS para sus endpoints o carecer de información para algunos títulos. La existencia en el catálogo no garantiza reproducción ni derechos de acceso. NubeToon no almacena películas ni intenta eludir anuncios o restricciones; no existe API pública documentada para leer el progreso del iframe mediante `postMessage`.
