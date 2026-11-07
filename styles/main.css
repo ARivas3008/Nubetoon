@@ -14,9 +14,24 @@ a.brand:hover .logo-mark{transform:rotate(-6deg) scale(1.055);filter:drop-shadow
 @media(max-width:610px){.brand .logo-mark{width:32px;height:32px}}
 @media(prefers-reduced-motion:reduce){.brand .logo-mark{transition:none!important}}
 
+/* Interacción táctil: se elimina el destello celeste de Android/Chrome
+   sin modificar :hover ni ocultar el foco de teclado. */
+html,body,a,button,input,select,textarea,summary,label,[role="button"],
+[tabindex],.card,.poster-card,.episode-chip,.source-btn{
+  -webkit-tap-highlight-color:transparent;
+}
+:where(a,button,input,select,textarea,summary,[role="button"],[tabindex]):focus-visible{
+  outline:2px solid #b99aff;
+  outline-offset:3px;
+}
 
-/* Ajustes opcionales del reproductor externo: visibles y accesibles en móvil. */
-.remote-preferences{padding:14px;margin:13px 0;border:1px solid #3a455f;border-radius:12px;background:#0d1526}
-.control-section .remote-preferences>label:first-child{margin-top:0;font-weight:700}
-.control-section .remote-preferences .check-line{margin:14px 0 9px}
-.remote-preferences .field-hint{line-height:1.6;color:#9badc9}
+/* Identidad morada para la superficie del reproductor local y externo.
+   Los controles de un iframe de otro dominio solo se personalizan por su API. */
+.player-screen{
+  border-color:rgba(167,139,250,.63);
+  background:radial-gradient(ellipse at center,rgba(87,46,158,.22),transparent 70%),#080612;
+  box-shadow:0 0 0 1px rgba(139,92,246,.1),0 15px 48px rgba(63,30,120,.2);
+}
+.player-screen:focus-within{border-color:#a78bfa}
+.player-screen iframe{background:#0b071c}
+.player-screen video{accent-color:#a78bfa}

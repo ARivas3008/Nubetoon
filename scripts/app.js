@@ -145,15 +145,21 @@
       const id=tmdb.value.trim();if(!/^\d{1,9}$/.test(id)||Number(id)===0){NT.notify('Introduce un ID de TMDb válido (no de TVmaze).');tmdb.focus();return;}
       const kind=item.type==='movie'?'movie':item.type==='anime'?'anime':'tv';
       const path=kind==='movie'?`/e/movie/${id}`:`/e/${kind}/${id}/${season}/${episode}`;
-      // Estos parámetros están documentados por VideoAPI; no controlamos su reproductor interno.
-      const skin=$('remoteSkin').value,hideControls=$('remoteHideControls').checked;
-      const params=new URLSearchParams();
-      if(['prime','cinematic','netflix','disney','vidzilla'].includes(skin))params.set('skin',skin);
-      if(hideControls)params.set('hide_controls','1');
-      const embedUrl='https://videoapi.la'+path+(params.size?('?'+params.toString()):'');
+      // Configuración predeterminada de VideoAPI: paleta violeta y controles del proveedor ocultos.
+      // El iframe es de otro origen; no es posible modificar su DOM ni los controles
+      // de un reproductor adicional que VideoAPI pudiera cargar.
+      const params=new URLSearchParams({
+        skin:'cinematic',
+        primary_color:'8B5CF6',
+        secondary_color:'1A1036',
+        icon_color:'F5F3FF',
+        hide_controls:'1'
+      });
+      const embedUrl='https://videoapi.la'+path+'?'+params.toString();
       clearScreen();
       const iframe=NT.el('iframe',{src:embedUrl,title:'Reproductor de VideoAPI (proveedor externo)',sandbox:'allow-scripts allow-same-origin allow-forms allow-presentation',referrerpolicy:'origin',allow:'autoplay; fullscreen; encrypted-media; picture-in-picture',allowfullscreen:''});
-      screen.replaceChildren(iframe);$('playerStatus').textContent=hideControls?'VideoAPI: controles ocultos. Para pausarlo o avanzar, vuelve a activar los controles y conecta otra vez.':'Se solicitó VideoAPI con tu consentimiento; si persiste el icono central, cambia el estilo o utiliza la opción de ocultar controles.';
+      screen.replaceChildren(iframe);
+      $('playerStatus').textContent='VideoAPI usa un tema violeta y solicita ocultar los controles internos. Si se necesita pausar o avanzar, el proveedor puede requerir controles propios.';
       $('remoteConsent').checked=false;$('connectRemote').disabled=true;
     });
     $('closePlayer').addEventListener('click',()=>clearScreen('Reproductor cerrado. Puedes seleccionar otra fuente.'));
