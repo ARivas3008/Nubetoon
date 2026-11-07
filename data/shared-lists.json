@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "description": "Listas editoriales publicadas desde el repositorio. Sin referencias a episodios.",
+  "lists": [
+    {
+      "id": "misterios-animados",
+      "title": "Misterios que merecen otra mirada",
+      "description": "Historias que esconden preguntas detrás de cada escena. Estas series combinan secretos, humor y una atmósfera que invita a descubrir pistas hasta el final.",
+      "items": [
+        {
+          "mediaId": "gravity-falls"
+        },
+        {
+          "mediaId": "batman-2004"
+        },
+        {
+          "mediaId": "over-the-garden-wall"
+        }
+      ]
+    },
+    {
+      "id": "aventuras-inolvidables",
+      "title": "Aventuras para volver a empezar",
+      "description": "Un recorrido por mundos memorables, héroes que aprenden de sus decisiones y viajes que todavía sorprenden. Perfectas para quienes disfrutan los relatos de crecimiento y descubrimiento.",
+      "items": [
+        {
+          "mediaId": "avatar"
+        },
+        {
+          "mediaId": "samurai-jack"
+        },
+        {
+          "mediaId": "batman-beyond"
+        }
+      ]
+    }
+  ]
+}

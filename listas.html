@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d18"><meta name="description" content="NubeToon · Tu universo visual de series, carátulas oficiales y reproducción opcional.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://static.tvmaze.com https://images.metahub.space https://image.tmdb.org; media-src blob:; frame-src https://videoapi.la; connect-src 'self' https://api.tvmaze.com https://*.strem.io; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Listas compartidas · NubeToon</title>
+<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107p">
+<script defer src="scripts/i18n.js?v=20261107p"></script><script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/lists.js?v=20261107p"></script>
+</head>
+<body data-page="listas"><a class="skip-link" href="#contenido">Saltar al contenido</a><div class="site">
+<header class="site-header"><div class="header-wrap">
+<a class="brand" href="index.html" aria-label="NubeToon, Inicio"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></a>
+<nav class="nav-desktop" aria-label="Navegación principal"><a href="index.html" class="nav-link" >Inicio</a><a href="catalogo.html" class="nav-link " >Explorar</a><a href="mi-lista.html" class="nav-link " >Mi lista</a><a href="reproductor.html" class="nav-link " >Reproductor</a><a href="blog.html" class="nav-link">Blog</a><a href="listas.html" class="nav-link is-active" aria-current="page">Listas</a></nav>
+<div class="header-right"><a class="icon-link" href="catalogo.html" title="Buscar títulos" aria-label="Buscar títulos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.4"/><path d="m16 16 5 5"/></svg></a><span class="nav-avatar" title="Catálogo personal">N</span></div>
+</div></header>
+<main id="contenido">
+<section class="blog-hero shared-list-hero">
+ <div class="container blog-hero-content">
+  <p class="kicker">COLECCIONES / NUBETOON</p>
+  <h1>Historias que <em>nos representan.</em></h1>
+  <p class="blog-hero-description">Crea y descubre selecciones personales de películas y series. Una lista, tus títulos favoritos y las carátulas que los hacen inolvidables.</p>
+  <div class="blog-hero-actions"><div class="blog-invite shared-list-invite">
+    <span>Comparte tus gustos</span>
+    <button id="sharedCompose" class="blog-compose-square" type="button" aria-controls="sharedEditor" aria-expanded="false" aria-label="Crear lista" title="Crear lista">+</button>
+  </div></div>
+ </div>
+</section>
+<section class="container blog-editor-shell shared-list-editor" id="sharedEditor" hidden aria-labelledby="sharedEditorHeading">
+ <div class="blog-editor-intro"><div><p class="kicker">EDITOR / LISTAS</p><h2 id="sharedEditorHeading">Nueva lista</h2></div><p>Cada selección contiene un título, una descripción y carátulas de películas o series. No se incluyen episodios.</p></div>
+ <form id="sharedForm" class="blog-form">
+  <label>Título de la lista <input id="sharedTitle" name="title" maxlength="120" placeholder="Ej.: Mis series imprescindibles" required></label>
+  <label>Descripción <textarea id="sharedDescription" name="description" rows="4" maxlength="1200" required placeholder="Cuéntanos por qué elegiste estas historias…"></textarea></label>
+  <section class="blog-media-chooser" aria-label="Añadir películas y series">
+    <div class="shared-picker-heading"><span class="blog-field-title">Añade películas y series</span><span id="sharedCount" class="shared-selection-count">0 / 20</span></div>
+    <div class="blog-media-switch" role="group" aria-label="Tipo de contenido">
+      <button class="blog-media-kind" type="button" data-shared-kind="movie" aria-pressed="false">Película</button>
+      <button class="blog-media-kind is-active" type="button" data-shared-kind="series" aria-pressed="true">Serie</button>
+    </div>
+    <label>Buscar un título <input id="sharedMediaSearch" type="search" autocomplete="off" placeholder="Buscar serie…" aria-controls="sharedSearchResults"></label>
+    <p id="sharedSearchStatus" class="blog-media-status" role="status" aria-live="polite">Selecciona títulos para construir tu lista.</p>
+    <div id="sharedSearchResults" class="blog-media-results" role="group" aria-label="Resultados de búsqueda"></div>
+    <div class="shared-selected-list" id="sharedSelected" aria-label="Títulos seleccionados"></div>
+  </section>
+  <div class="blog-editor-bottom"><p>Estas listas se guardan en tu navegador. Para compartirlas públicamente, hay que añadir su JSON al repositorio.</p>
+    <div class="blog-form-buttons"><button id="sharedCancel" type="button" class="btn btn-outline">Cancelar</button><button id="sharedSave" type="submit" class="btn btn-primary">Guardar lista</button></div>
+  </div>
+ </form>
+</section>
+<section id="sharedStart" class="container blog-list-section">
+ <div class="blog-list-heading"><div><p class="kicker">SELECCIONES / COMUNIDAD</p><h2>Explora nuestras <em>listas.</em></h2><p id="sharedResultsCount" class="blog-counter">Cargando listas…</p></div>
+   <button id="sharedExport" class="blog-export" type="button" disabled>↓ Exportar mis listas</button>
+ </div>
+ <div class="blog-filters shared-filters">
+  <label class="blog-search"><span aria-hidden="true">⌕</span><input type="search" id="sharedListSearch" placeholder="Buscar listas…" aria-label="Buscar listas" autocomplete="off"></label>
+  <div class="blog-filter-buttons" role="group" aria-label="Filtrar listas">
+    <button type="button" class="blog-filter is-active" data-shared-filter="all" aria-pressed="true">Todas</button>
+    <button type="button" class="blog-filter" data-shared-filter="series" aria-pressed="false">Series</button>
+    <button type="button" class="blog-filter" data-shared-filter="movies" aria-pressed="false">Películas</button>
+    <button type="button" class="blog-filter" data-shared-filter="mixed" aria-pressed="false">Mixtas</button>
+  </div>
+ </div>
+ <div id="sharedCards" class="shared-list-grid" aria-live="polite"></div>
+ <div id="sharedEmpty" class="blog-empty" hidden><h3>No hay listas para mostrar.</h3><p>Prueba otra búsqueda o crea tu primera selección.</p></div>
+ <div class="blog-storage-note"><span class="blog-storage-dot" aria-hidden="true"></span><p><b id="sharedLocalCount">0 listas locales</b> · Solo tú puedes ver las listas creadas en este navegador, hasta que se publiquen en el repositorio.</p></div>
+</section>
+</main><footer class="site-footer container"><div class="footer-upper"><div class="brand"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></div><p>Historias para volver a descubrir, a tu ritmo.</p></div>
+<div class="footer-bottom"><span>© NubeToon · Proyecto personal · Sin contenido audiovisual alojado.</span><span>Metadatos e imágenes: <a href="https://www.tvmaze.com/" target="_blank" rel="noopener noreferrer">TVmaze</a> (CC BY-SA) · Reproducción externa opcional</span></div></footer>
+<nav class="nav-mobile" aria-label="Navegación móvil"><a href="index.html" class=""><span>⌂</span>Inicio</a><a href="catalogo.html" class=""><span>⌕</span>Explorar</a><a href="mi-lista.html" class=""><span>♡</span>Mi lista</a><a href="reproductor.html" class=""><span>▷</span>Ver</a><a href="blog.html"><span>✎</span>Blog</a><a href="listas.html" class="is-active"><span>▦</span>Listas</a></nav><div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div></div></body></html>
