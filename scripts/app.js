@@ -11,7 +11,7 @@
   const img=(src,alt='',cls='')=>{const node=NT.el('img',{src,alt,class:cls,loading:'lazy',decoding:'async'});node.addEventListener('error',()=>{if(node.getAttribute('src')!== 'assets/art/default.svg')node.src=NT.artUrl(null);},{once:true});return node;};
   const findItem=id=>collection.find(x=>x.id===id)||null;
   const filmType=item=>tr(NT.types[item.type]||tr('Serie'));
-  const genreText=item=>(item.genres||[]).slice(0,2).map(tr).join(' / ')||filmType(item);
+  const genreText=item=>(item.genres||[]).slice(0,2).map(g=>tr(g)).join(' / ')||filmType(item);
   function displayArtwork(container,item){container.replaceChildren(img(banner(item),'','dynamic-backdrop'));}
   function card(item){
     const node=NT.el('article',{class:'media-card'});
@@ -37,7 +37,7 @@
       const recent=NT.loadSelection();const recentItem=recent&&findItem(recent.id);
       const picks=[...(recentItem?[recentItem]:[]),...collection.filter(x=>x.id!==recentItem?.id)].slice(0,3);
       $('recentGrid').replaceChildren(...picks.map(compact));
-      if(featured){$('heroPrimary').href=NT.detailUrl(featured);$('heroDescription').textContent=featured.description||tr('Tu selección de historias comienza aquí.');if(featured.backdrop && featured.backdrop!==featured.art)displayArtwork($('heroBackdrop'),featured);}
+      if(featured){$('heroPrimary').href=NT.detailUrl(featured);$('heroDescription').textContent=featured.description?tr(featured.description):tr('Tu selección de historias comienza aquí.');if(featured.backdrop && featured.backdrop!==featured.art)displayArtwork($('heroBackdrop'),featured);}
     };
     render();refreshImages(collection,render);
   }
@@ -86,11 +86,11 @@
   function mountDetail(){(async()=>{
     let item=await resolveFromParams();if(!item){$('detailTitle').textContent=tr('No encontramos esta historia');$('detailDescription').textContent=tr('Vuelve al catálogo para seleccionar un título.');return;}
     let episodes=[];const select=$('detailSeason');let season=1;
-    function renderHero(){ $('detailTitle').textContent=item.title;$('detailKicker').textContent=`NUBETOON / ${filmType(item).toUpperCase()}`;setMeta($('detailMeta'),item);$('detailDescription').textContent=item.description||tr('Una historia para descubrir en tu colección.');if(item.backdrop&&item.backdrop!==item.art)displayArtwork($('detailBackdrop'),item);if(item.from==='remote')$('dataAttribution').textContent='Metadatos y carátulas: TVmaze · Identificador '+item.tvmazeId;else $('dataAttribution').textContent=tr('Carteles y metadatos en línea: TVmaze (si están disponibles)');updateFav();}
-    function updateFav(){const saved=NT.isFavorite(item);$('detailFavorite').textContent=saved?'♥ En Mi lista':'♡ Añadir a Mi lista';$('detailFavorite').setAttribute('aria-pressed',String(saved));}
+    function renderHero(){ $('detailTitle').textContent=item.title;$('detailKicker').textContent=`NUBETOON / ${filmType(item).toUpperCase()}`;setMeta($('detailMeta'),item);$('detailDescription').textContent=item.description?tr(item.description):tr('Una historia para descubrir en tu colección.');if(item.backdrop&&item.backdrop!==item.art)displayArtwork($('detailBackdrop'),item);if(item.from==='remote')$('dataAttribution').textContent=tr('Metadatos y carátulas: TVmaze · Identificador')+' '+item.tvmazeId;else $('dataAttribution').textContent=tr('Carteles y metadatos en línea: TVmaze (si están disponibles)');updateFav();}
+    function updateFav(){const saved=NT.isFavorite(item);$('detailFavorite').textContent=saved?'♥ '+tr('En Mi lista'):'♡ '+tr('Añadir a Mi lista');$('detailFavorite').setAttribute('aria-pressed',String(saved));}
     function renderEpisodes(){const items=episodes.filter(e=>Number(e.season)===season).slice(0,80);$('watchFromDetail').href=NT.playerUrl(item,season,1);const list=$('detailEpisodes');list.replaceChildren();if(item.type==='movie'){list.append(NT.el('div',{class:'empty-state'},tr('Película: abre el reproductor para cargarla directamente con VideoAPI, si dispone de un ID de TMDb.')));return;}
       if(!items.length){list.append(NT.el('div',{class:'empty-state'},tr('No hay episodios registrados para esta temporada.')));return;}
-      items.forEach(ep=>{const link=NT.el('a',{class:'episode-row',href:NT.playerUrl(item,season,Number(ep.number)||1)});const epArt=ep.image?.original||ep.image?.medium;link.append(img(epArt?NT.imageUrl(epArt,item.art):cover(item),'','episode-image'));const body=NT.el('div');body.append(NT.el('small',{},`T${String(ep.season).padStart(2,'0')} · E${String(ep.number).padStart(2,'0')}`),NT.el('h3',{},ep.name||`${tr('Episodio')} ${ep.number}`),NT.el('p',{},NT.cleanupText(ep.summary)||tr(tr('Seleccionar este capítulo en el reproductor'))));link.append(body,NT.el('span',{class:'episode-arrow','aria-hidden':'true'},'▷'));list.append(link);});
+      items.forEach(ep=>{const link=NT.el('a',{class:'episode-row',href:NT.playerUrl(item,season,Number(ep.number)||1)});const epArt=ep.image?.original||ep.image?.medium;link.append(img(epArt?NT.imageUrl(epArt,item.art):cover(item),'','episode-image'));const body=NT.el('div');body.append(NT.el('small',{},`T${String(ep.season).padStart(2,'0')} · E${String(ep.number).padStart(2,'0')}`),NT.el('h3',{},ep.name||`${tr('Episodio')} ${ep.number}`),NT.el('p',{},NT.cleanupText(ep.summary)||tr('Seleccionar este capítulo en el reproductor')));link.append(body,NT.el('span',{class:'episode-arrow','aria-hidden':'true'},'▷'));list.append(link);});
     }
     $('detailFavorite').addEventListener('click',()=>{NT.toggleFavorite(item);updateFav();NT.notify(tr('Se actualizó Mi lista'));});
     select.addEventListener('change',()=>{season=Number(select.value)||1;renderEpisodes();});
@@ -130,7 +130,7 @@
       const ep=selectedEpisode();
       $('episodeSynopsisHeading').textContent=item.type==='movie'?item.title:episodeNameOnly();
       const description=item.type==='movie'
-        ? NT.cleanupText(item.description)
+        ? tr(NT.cleanupText(item.description))
         : NT.cleanupText(ep?.summary);
       synopsisText.textContent=description||(item.type==='movie'
         ? tr('No hay sinopsis disponible para esta película.')
@@ -145,7 +145,7 @@
       $('seriesInfoPosterLink').setAttribute('aria-label',tr('Abrir ficha de')+' '+item.title);
       $('seriesInfoKicker').textContent=item.type==='movie'?tr('SOBRE LA PELÍCULA'):tr('SOBRE LA SERIE');
       $('seriesInfoMeta').textContent=[item.year||null,filmType(item),...(item.genres||[]).slice(0,2)].filter(Boolean).join(' · ');
-      $('seriesInfoDescription').textContent=NT.cleanupText(item.description)||tr('La sinopsis de este título todavía no está disponible.');
+      $('seriesInfoDescription').textContent=(item.description?tr(NT.cleanupText(item.description)):'')||tr('La sinopsis de este título todavía no está disponible.');
       poster.src=cover(item);
       poster.alt=tr('Carátula de')+' '+item.title;
     }
