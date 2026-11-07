@@ -4,40 +4,57 @@
 <meta name="theme-color" content="#090d18"><meta name="description" content="NubeToon · Tu universo visual de series, carátulas oficiales y reproducción opcional.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://static.tvmaze.com; media-src blob:; frame-src https://videoapi.la; connect-src 'self' https://api.tvmaze.com; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Reproductor · NubeToon</title>
-<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107c">
-<script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/app.js?v=20261107c"></script>
+<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107d">
+<script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/app.js?v=20261107d"></script>
 </head><body data-page="reproductor"><a class="skip-link" href="#contenido">Saltar al contenido</a>
 <div class="site"><header class="site-header"><div class="header-wrap">
 <a class="brand" href="index.html" aria-label="NubeToon, Inicio"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></a>
 <nav class="nav-desktop" aria-label="Navegación principal"><a href="index.html" class="nav-link " >Inicio</a><a href="catalogo.html" class="nav-link " >Explorar</a><a href="mi-lista.html" class="nav-link " >Mi lista</a><a href="reproductor.html" class="nav-link is-active" aria-current="page">Reproductor</a></nav>
 <div class="header-right"><a class="icon-link" href="catalogo.html" title="Buscar títulos" aria-label="Buscar títulos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.4"/><path d="m16 16 5 5"/></svg></a><span class="nav-avatar" title="Catálogo personal">N</span></div>
-</div></header><main id="contenido"><section class="container player-wrap"><div class="player-breadcrumb"><a href="catalogo.html">Explorar</a><span> / </span><span id="playerBreadcrumb">Reproductor</span></div><div class="player-heading"><div><span class="kicker">SALA DE REPRODUCCIÓN / NUBETOON</span><h1 id="playerTitle">Tu propia <em>pantalla.</em></h1><p id="playerSubtitle">Reproducción integrada · Series y películas</p></div><a class="text-link" id="playerDetailLink" href="catalogo.html">Ver detalles ↗</a></div>
+</div></header><main id="contenido"><section class="container player-wrap"><div class="player-breadcrumb"><a href="catalogo.html">Explorar</a><span> / </span><a id="playerBreadcrumb" href="catalogo.html">Reproductor</a></div><div class="player-heading"><div><span class="kicker">SALA DE REPRODUCCIÓN / NUBETOON</span><h1><a id="playerTitle" href="catalogo.html" title="Abrir ficha de la serie">Tu propia <em>pantalla.</em></a></h1><p id="playerSubtitle">Reproducción integrada · Series y películas</p></div><a class="text-link" id="playerDetailLink" href="catalogo.html">Ver detalles ↗</a></div>
 <div class="player-layout">
   <div class="player-main">
     <div class="player-screen" id="videoScreen" aria-label="Reproductor de NubeToon">
-      <div class="player-placeholder"><div class="player-play-symbol">▷</div><h2>Preparando tu episodio…</h2><p>El reproductor se conecta automáticamente al abrir esta página.</p></div>
+      <div class="player-placeholder"><div class="player-play-symbol">▷</div><h2>Preparando episodio…</h2><p>El vídeo se carga automáticamente.</p></div>
     </div>
     <div class="screen-footer">
       <div id="playerStatus" role="status" aria-live="polite">Preparando la reproducción…</div>
       <button class="subtle-btn" id="closePlayer" type="button" title="Volver a cargar el episodio">↻ Recargar vídeo</button>
     </div>
-    <div class="player-next">
-      <div><p class="kicker">CONTINUAR VIENDO</p><h2 id="nextHeading">Otros episodios</h2></div>
-      <a href="catalogo.html" class="text-link">Más historias ↗</a>
-    </div>
-    <div id="playerEpisodeChips" class="player-episodes" aria-label="Accesos rápidos a episodios"></div>
-  </div>
-  <aside class="player-sidebar player-sidebar-compact" aria-label="Selección de capítulo">
-    <details class="episode-config" id="episodeConfig">
-      <summary aria-label="Ampliar o contraer las opciones de temporada y episodio">
-        <span id="episodeSummary">Temporada 1 · Episodio 1</span>
-        <span class="episode-config-chevron" aria-hidden="true"></span>
-      </summary>
-      <div class="episode-config-fields">
-        <div><label for="playerSeason">Temporada</label><select id="playerSeason" aria-label="Seleccionar temporada"></select></div>
-        <div><label for="playerEpisode">Episodio</label><select id="playerEpisode" aria-label="Seleccionar episodio"></select></div>
+    <section class="watch-episode-summary" aria-labelledby="episodeSynopsisHeading">
+      <div class="watch-episode-summary-head">
+        <div>
+          <span class="kicker">ACERCA DEL CAPÍTULO</span>
+          <h2 id="episodeSynopsisHeading">Resumen del episodio</h2>
+        </div>
+        <button type="button" id="toggleEpisodeSynopsis" class="summary-toggle" aria-expanded="true" aria-controls="episodeSynopsisText">Ocultar resumen <span aria-hidden="true">⌃</span></button>
       </div>
-    </details>
+      <p id="episodeSynopsisText">Cargando la información del capítulo…</p>
+    </section>
+    <section class="player-next" aria-labelledby="nextHeading">
+      <div class="player-next-header">
+        <div><p class="kicker">A CONTINUACIÓN</p><h2 id="nextHeading">Episodios</h2></div>
+        <div class="player-season-control">
+          <label for="playerSeason">Temporada</label>
+          <select id="playerSeason" aria-label="Seleccionar temporada"></select>
+        </div>
+      </div>
+      <div id="playerEpisodeChips" class="player-episodes" aria-label="Elegir capítulo"></div>
+    </section>
+  </div>
+  <aside class="series-info-aside" aria-label="Información de la serie">
+    <article class="series-info-card">
+      <div class="series-info-content">
+        <span class="kicker" id="seriesInfoKicker">SOBRE LA SERIE</span>
+        <h2><a id="seriesInfoTitle" href="catalogo.html">Serie</a></h2>
+        <p class="series-info-meta" id="seriesInfoMeta"></p>
+        <p class="series-info-description" id="seriesInfoDescription">Información de la serie.</p>
+        <a id="seriesInfoLink" class="series-info-link" href="catalogo.html">Ver ficha completa <span aria-hidden="true">↗</span></a>
+      </div>
+      <a id="seriesInfoPosterLink" class="series-info-poster-link" href="catalogo.html" aria-label="Abrir ficha de la serie">
+        <img id="seriesInfoPoster" src="assets/art/default.svg" alt="Portada de la serie" loading="lazy" decoding="async">
+      </a>
+    </article>
   </aside>
 </div></section></main>
 <footer class="site-footer container"><div class="footer-upper"><div class="brand"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></div><p>Historias para volver a descubrir, a tu ritmo.</p></div>

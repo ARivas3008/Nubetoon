@@ -105,35 +105,73 @@
     }
     let episodes=[],season=Number(NT.params().get('season'))||1,
         episode=Number(NT.params().get('episode'))||1,requestToken=0,embedToken=0;
-    const screen=$('videoScreen'),seasonSel=$('playerSeason'),episodeSel=$('playerEpisode'),
-          summary=$('episodeSummary');
+    const screen=$('videoScreen'),seasonSel=$('playerSeason');
     const overlay=NT.el('div',{class:'player-episode-badge','aria-live':'polite'});
-    const episodeIndex=NT.el('span',{class:'player-episode-index'});
     const episodeName=NT.el('strong',{class:'player-episode-name'});
-    overlay.append(episodeIndex,episodeName);
-    function selectedEpisode(){
-      return episodes.find(e=>Number(e.season)===season&&Number(e.number)===episode)||null;
-    }
-    function currentEpisodeLabel(){
+    overlay.append(episodeName);
+    const synopsisText=$('episodeSynopsisText');
+    const toggleSynopsis=$('toggleEpisodeSynopsis');
+    const poster=$('seriesInfoPoster');
+    let summaryVisible=true;
+    const selectedEpisode=()=>episodes.find(e=>Number(e.season)===season&&Number(e.number)===episode)||null;
+    const episodeNameOnly=()=>{
       if(item.type==='movie')return item.title;
-      const fromApi=NT.clean(selectedEpisode()?.name);
-      return !fromApi || NT.normalize(fromApi)===NT.normalize('Episodio '+episode)
-        ? 'Episodio '+episode : 'Episodio '+episode+': '+fromApi;
+      const name=NT.clean(selectedEpisode()?.name);
+      return name||'Episodio '+episode;
+    };
+    const fullEpisodeName=()=>{
+      if(item.type==='movie')return item.title;
+      const name=episodeNameOnly();
+      return NT.normalize(name)===NT.normalize('Episodio '+episode)
+        ? name : 'Episodio '+episode+' · '+name;
+    };
+    function updateEpisodeSummary(){
+      const ep=selectedEpisode();
+      $('episodeSynopsisHeading').textContent=item.type==='movie'?item.title:episodeNameOnly();
+      const description=item.type==='movie'
+        ? NT.cleanupText(item.description)
+        : NT.cleanupText(ep?.summary);
+      synopsisText.textContent=description||(item.type==='movie'
+        ? 'No hay sinopsis disponible para esta película.'
+        : 'Todavía no hay un resumen disponible para este capítulo.');
     }
+    function updateSeriesCard(){
+      const href=NT.detailUrl(item);
+      $('seriesInfoTitle').textContent=item.title;
+      $('seriesInfoTitle').href=href;
+      $('seriesInfoLink').href=href;
+      $('seriesInfoPosterLink').href=href;
+      $('seriesInfoPosterLink').setAttribute('aria-label','Abrir ficha de '+item.title);
+      $('seriesInfoKicker').textContent=item.type==='movie'?'SOBRE LA PELÍCULA':'SOBRE LA SERIE';
+      $('seriesInfoMeta').textContent=[item.year||null,filmType(item),...(item.genres||[]).slice(0,2)].filter(Boolean).join(' · ');
+      $('seriesInfoDescription').textContent=NT.cleanupText(item.description)||'La sinopsis de este título todavía no está disponible.';
+      poster.src=cover(item);
+      poster.alt='Carátula de '+item.title;
+    }
+    poster.addEventListener('error',()=>{
+      if(!poster.src.endsWith('/assets/art/default.svg'))poster.src='assets/art/default.svg';
+    });
     function updateHead(){
+      const href=NT.detailUrl(item);
       $('playerTitle').textContent=item.title;
-      const isMovie=item.type==='movie';
-      const label=currentEpisodeLabel();
-      $('playerSubtitle').textContent=isMovie?'Película'+(item.year?' · '+item.year:''):
-        'Temporada '+season+' · '+label;
+      $('playerTitle').href=href;
+      $('playerTitle').title='Abrir ficha de '+item.title;
+      const label=fullEpisodeName();
+      $('playerSubtitle').textContent=item.type==='movie'
+        ? 'Película'+(item.year?' · '+item.year:'')
+        : 'Temporada '+season+' · '+label;
       $('playerBreadcrumb').textContent=item.title;
-      $('playerDetailLink').href=NT.detailUrl(item);
-      $('nextHeading').textContent=isMovie?'Explora más títulos':'Otros episodios de la temporada '+season;
-      summary.textContent=isMovie?'Película':'Temporada '+season+' · Episodio '+episode;
-      episodeIndex.textContent=isMovie?'PELÍCULA':'T'+season+' · E'+String(episode).padStart(2,'0');
-      episodeName.textContent=label;
-      document.title=item.title+(isMovie?'':' · T'+season+' E'+episode)+' | NubeToon';
+      $('playerBreadcrumb').href=href;
+      $('playerDetailLink').href=href;
+      $('nextHeading').textContent=item.type==='movie'?'Más títulos':'Episodios';
+      episodeName.textContent=episodeNameOnly();
+      document.title=item.title+(item.type==='movie'?'':' · T'+season+' E'+episode)+' | NubeToon';
       NT.storeSelection(item,season,episode);
+      updateEpisodeSummary();
+      const target=NT.playerUrl(item,season,episode);
+      if(location.pathname.split('/').pop()==='reproductor.html'){
+        history.replaceState(null,'',target);
+      }
     }
     function displayUnavailable(message){
       embedToken++;
@@ -146,8 +184,6 @@
       screen.replaceChildren(placeholder);
       $('playerStatus').textContent=message;
     }
-    // Configuración pública documentada: URL limpia, tema Prime y colores violeta.
-    // El reproductor conserva sus controles; ocultarlos no resolvió el icono en Android.
     function videoUrl(){
       const id=Number(item.tmdb);
       if(!Number.isSafeInteger(id)||id<=0||id>999999999)return null;
@@ -168,13 +204,13 @@
     function loadEpisode(){
       const url=videoUrl();
       if(!url){
-        displayUnavailable('Este título no tiene un identificador TMDb compatible. No es posible generar una URL válida de VideoAPI.');
+        displayUnavailable('No existe un ID de TMDb válido para reproducir este título.');
         return;
       }
       const load=++embedToken;
       const iframe=NT.el('iframe',{
         src:url,
-        title:'VideoAPI · '+item.title+(item.type==='movie'?'':' · '+currentEpisodeLabel()),
+        title:'VideoAPI · '+item.title+' · '+fullEpisodeName(),
         loading:'eager',
         sandbox:'allow-scripts allow-same-origin allow-forms allow-presentation',
         referrerpolicy:'origin',
@@ -182,45 +218,42 @@
         allowfullscreen:''
       });
       iframe.addEventListener('load',()=>{
-        if(embedToken===load){
-          $('playerStatus').textContent='Reproductor integrado cargado. La disponibilidad y los controles dependen de VideoAPI.';
-        }
+        if(embedToken===load)$('playerStatus').textContent='Reproductor cargado. El contenido depende de VideoAPI.';
       });
       screen.replaceChildren(iframe,overlay);
       $('playerStatus').textContent='Conectando con el reproductor…';
     }
     function renderEpisodes(){
       if(item.type==='movie'){
-        seasonSel.disabled=true;episodeSel.disabled=true;
-        seasonSel.replaceChildren(new Option('No aplica','1'));
-        episodeSel.replaceChildren(new Option('Película','1'));
+        seasonSel.disabled=true;
+        seasonSel.replaceChildren(new Option('—','1'));
         $('playerEpisodeChips').replaceChildren();
         return;
       }
-      seasonSel.disabled=false;episodeSel.disabled=false;
+      seasonSel.disabled=false;
       const seasons=seasonsFor(item,episodes);
       if(!seasons.includes(season))season=seasons[0]||1;
-      seasonSel.replaceChildren(...seasons.map(n=>new Option('Temporada '+n,String(n))));
+      // Solo se muestra el número de temporada; la etiqueta conserva el contexto.
+      seasonSel.replaceChildren(...seasons.map(n=>new Option(String(n),String(n))));
       seasonSel.value=String(season);
       const inSeason=episodes.filter(e=>Number(e.season)===season).slice(0,80);
       const numbers=inSeason.map(e=>Number(e.number)).filter(n=>n>0);
       if(!numbers.includes(episode))episode=numbers[0]||1;
-      episodeSel.replaceChildren(...inSeason.map(e=>new Option('E'+String(e.number).padStart(2,'0')+' · '+(e.name||'Episodio '+e.number),String(e.number))));
-      if(!inSeason.length)episodeSel.add(new Option('Episodio '+episode,String(episode)));
-      episodeSel.value=String(episode);
       const chips=$('playerEpisodeChips');
       chips.replaceChildren();
-      for(const e of inSeason.slice(0,24)){
-        const selected=Number(e.number)===episode;
+      for(const e of inSeason.slice(0,60)){
+        const current=Number(e.number)===episode;
+        const number=Number(e.number);
         const button=NT.el('button',{
           type:'button',
-          class:'episode-chip'+(selected?' is-active':''),
-          title:'Episodio '+e.number+(e.name?' · '+e.name:''),
-          'aria-pressed':String(selected)
-        },'E'+String(e.number).padStart(2,'0'));
+          class:'episode-chip'+(current?' is-active':''),
+          title:'Episodio '+number+(e.name?' · '+e.name:''),
+          'aria-label':'Seleccionar episodio '+number+(e.name?' · '+e.name:''),
+          'aria-pressed':String(current)
+        },String(number));
         button.addEventListener('click',()=>{
-          if(episode===Number(e.number))return;
-          episode=Number(e.number);
+          if(episode===number)return;
+          episode=number;
           renderEpisodes();
           updateHead();
           loadEpisode();
@@ -228,29 +261,38 @@
         chips.append(button);
       }
     }
+    function setSynopsisVisible(value){
+      summaryVisible=value;
+      synopsisText.hidden=!value;
+      toggleSynopsis.setAttribute('aria-expanded',String(value));
+      toggleSynopsis.replaceChildren(
+        document.createTextNode(value?'Ocultar resumen ':'Mostrar resumen '),
+        NT.el('span',{'aria-hidden':'true'},value?'⌃':'⌄')
+      );
+    }
+    toggleSynopsis.addEventListener('click',()=>setSynopsisVisible(!summaryVisible));
     seasonSel.addEventListener('change',()=>{
-      season=Number(seasonSel.value)||1;episode=1;
-      renderEpisodes();updateHead();loadEpisode();
-    });
-    episodeSel.addEventListener('change',()=>{
-      episode=Number(episodeSel.value)||1;
-      renderEpisodes();updateHead();loadEpisode();
+      season=Number(seasonSel.value)||1;
+      episode=1;
+      renderEpisodes();
+      updateHead();
+      loadEpisode();
     });
     $('closePlayer').addEventListener('click',()=>loadEpisode());
-    // Presenta la interfaz y solicita el iframe inmediatamente: no se muestra
-    // un selector de fuente o de título redundante.
     episodes=fallbackEpisodes(item);
-    renderEpisodes();updateHead();loadEpisode();
+    renderEpisodes();updateSeriesCard();updateHead();loadEpisode();
     const run=++requestToken;
     const enriched=await API.enrich(item);
     if(run!==requestToken)return;
     item={...item,...enriched};
-    const found=await getEpisodes(item);
+    const realEpisodes=await getEpisodes(item);
     if(run!==requestToken)return;
-    episodes=found;
-    const beforeSeason=season,beforeEpisode=episode;
-    renderEpisodes();updateHead();
-    if(season!==beforeSeason||episode!==beforeEpisode)loadEpisode();
+    episodes=realEpisodes;
+    const oldSeason=season,oldEpisode=episode;
+    renderEpisodes();
+    updateSeriesCard();
+    updateHead();
+    if(season!==oldSeason||episode!==oldEpisode)loadEpisode();
   }
   async function loadSaved(){
     const ids=NT.favoritesIds();const items=[];
