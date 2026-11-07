@@ -88,6 +88,32 @@
     let episodes=[];const select=$('detailSeason');let season=1;
     function renderHero(){ $('detailTitle').textContent=item.title;$('detailKicker').textContent=`NUBETOON / ${filmType(item).toUpperCase()}`;setMeta($('detailMeta'),item);$('detailDescription').textContent=item.description?tr(item.description):tr('Una historia para descubrir en tu colección.');if(item.backdrop&&item.backdrop!==item.art)displayArtwork($('detailBackdrop'),item);if(item.from==='remote')$('dataAttribution').textContent=tr('Metadatos y carátulas: TVmaze · Identificador')+' '+item.tvmazeId;else $('dataAttribution').textContent=tr('Carteles y metadatos en línea: TVmaze (si están disponibles)');updateFav();}
     function updateFav(){const saved=NT.isFavorite(item);$('detailFavorite').textContent=saved?'♥ '+tr('En Mi lista'):'♡ '+tr('Añadir a Mi lista');$('detailFavorite').setAttribute('aria-pressed',String(saved));}
+    // Fullscreen del contenedor: mantiene visibles el nombre del capítulo
+    // y la interfaz del sitio. El fullscreen interno del iframe pertenece a VideoAPI.
+    function syncExpand(){
+      const expanded=document.fullscreenElement===screen;
+      expand.textContent=expanded?'⤢':'⛶';
+      expand.setAttribute('aria-label',expanded
+        ? tr('Salir de pantalla completa') : tr('Pantalla completa con el nombre del capítulo'));
+      expand.title=expand.getAttribute('aria-label');
+      screen.classList.toggle('is-outer-fullscreen',expanded);
+    }
+    expand.addEventListener('click',async()=>{
+      try{
+        if(document.fullscreenElement===screen){
+          await document.exitFullscreen();
+        }else if(screen.requestFullscreen){
+          await screen.requestFullscreen();
+        }else{
+          NT.notify(tr('Pantalla completa no disponible en este navegador.'));
+        }
+      }catch{
+        NT.notify(tr('Pantalla completa no disponible en este navegador.'));
+      }
+      syncExpand();
+    });
+    document.addEventListener('fullscreenchange',syncExpand);
+    syncExpand();
     function renderEpisodes(){const items=episodes.filter(e=>Number(e.season)===season).slice(0,80);$('watchFromDetail').href=NT.playerUrl(item,season,1);const list=$('detailEpisodes');list.replaceChildren();if(item.type==='movie'){list.append(NT.el('div',{class:'empty-state'},tr('Película: abre el reproductor para cargarla directamente con VideoAPI, si dispone de un ID de TMDb.')));return;}
       if(!items.length){list.append(NT.el('div',{class:'empty-state'},tr('No hay episodios registrados para esta temporada.')));return;}
       items.forEach(ep=>{const link=NT.el('a',{class:'episode-row',href:NT.playerUrl(item,season,Number(ep.number)||1)});const epArt=ep.image?.original||ep.image?.medium;link.append(img(epArt?NT.imageUrl(epArt,item.art):cover(item),'','episode-image'));const body=NT.el('div');body.append(NT.el('small',{},`T${String(ep.season).padStart(2,'0')} · E${String(ep.number).padStart(2,'0')}`),NT.el('h3',{},ep.name||`${tr('Episodio')} ${ep.number}`),NT.el('p',{},NT.cleanupText(ep.summary)||tr('Seleccionar este capítulo en el reproductor')));link.append(body,NT.el('span',{class:'episode-arrow','aria-hidden':'true'},'▷'));list.append(link);});
@@ -106,7 +132,7 @@
     }
     let episodes=[],season=Number(NT.params().get('season'))||1,
         episode=Number(NT.params().get('episode'))||1,requestToken=0,embedToken=0;
-    const screen=$('videoScreen'),seasonSel=$('playerSeason');
+    const screen=$('videoScreen'),seasonSel=$('playerSeason'),expand=$('playerExpand');
     const overlay=NT.el('div',{class:'player-episode-badge','aria-live':'polite'});
     const episodeName=NT.el('strong',{class:'player-episode-name'});
     overlay.append(episodeName);
@@ -165,7 +191,7 @@
       $('playerBreadcrumb').href=href;
       $('playerDetailLink').href=href;
       $('nextHeading').textContent=item.type==='movie'?tr('Más títulos'):tr('Episodios');
-      episodeName.textContent=episodeNameOnly();
+      episodeName.textContent=fullEpisodeName();
       document.title=item.title+(item.type==='movie'?'':' · T'+season+' E'+episode)+' | NubeToon';
       NT.storeSelection(item,season,episode);
       updateEpisodeSummary();
@@ -195,7 +221,7 @@
         primary_color:'8B5CF6',
         secondary_color:'17102B',
         icon_color:'F5F3FF',
-        hide_title:'1',
+        hide_title:'0',
         hide_controls:'0',
         subtitles:'1',
         quality_selector:'1'
@@ -221,7 +247,7 @@
       iframe.addEventListener('load',()=>{
         if(embedToken===load)$('playerStatus').textContent=tr('Reproductor listo.');
       });
-      screen.replaceChildren(iframe,overlay);
+      screen.replaceChildren(iframe,overlay,expand);
       $('playerStatus').textContent=tr('Conectando con el reproductor…');
     }
     function renderEpisodes(){
