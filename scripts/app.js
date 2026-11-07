@@ -95,7 +95,7 @@
     select.addEventListener('change',()=>{season=Number(select.value)||1;renderEpisodes();});
     renderHero();
     const more=await API.enrich(item);item={...item,...more};renderHero();episodes=await getEpisodes(item);
-    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(`Temporada ${s}`,String(s))));select.disabled=item.type==='movie';season=Number(select.value)||1;renderEpisodes();
+    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(String(s),String(s))));select.disabled=item.type==='movie';season=Number(select.value)||1;renderEpisodes();
   })();}
   async function mountPlayer(){
     let item=await resolveFromParams();
@@ -210,7 +210,7 @@
       const load=++embedToken;
       const iframe=NT.el('iframe',{
         src:url,
-        title:'VideoAPI · '+item.title+' · '+fullEpisodeName(),
+        title:'Reproducción · '+item.title+' · '+fullEpisodeName(),
         loading:'eager',
         sandbox:'allow-scripts allow-same-origin allow-forms allow-presentation',
         referrerpolicy:'origin',
@@ -218,7 +218,7 @@
         allowfullscreen:''
       });
       iframe.addEventListener('load',()=>{
-        if(embedToken===load)$('playerStatus').textContent='Reproductor cargado. El contenido depende de VideoAPI.';
+        if(embedToken===load)$('playerStatus').textContent='Reproductor listo.';
       });
       screen.replaceChildren(iframe,overlay);
       $('playerStatus').textContent='Conectando con el reproductor…';
@@ -266,11 +266,12 @@
       synopsisText.hidden=!value;
       toggleSynopsis.setAttribute('aria-expanded',String(value));
       toggleSynopsis.replaceChildren(
-        document.createTextNode(value?'Ocultar resumen ':'Mostrar resumen '),
+        document.createTextNode(value?'Esconder':'Mostrar'),
         NT.el('span',{'aria-hidden':'true'},value?'⌃':'⌄')
       );
     }
     toggleSynopsis.addEventListener('click',()=>setSynopsisVisible(!summaryVisible));
+    setSynopsisVisible(summaryVisible);
     seasonSel.addEventListener('change',()=>{
       season=Number(seasonSel.value)||1;
       episode=1;
@@ -278,7 +279,7 @@
       updateHead();
       loadEpisode();
     });
-    $('closePlayer').addEventListener('click',()=>loadEpisode());
+
     episodes=fallbackEpisodes(item);
     renderEpisodes();updateSeriesCard();updateHead();loadEpisode();
     const run=++requestToken;

@@ -17,9 +17,9 @@
     <div class="player-screen" id="videoScreen" aria-label="Reproductor de NubeToon">
       <div class="player-placeholder"><div class="player-play-symbol">▷</div><h2>Preparando episodio…</h2><p>El vídeo se carga automáticamente.</p></div>
     </div>
-    <div class="screen-footer">
-      <div id="playerStatus" role="status" aria-live="polite">Preparando la reproducción…</div>
-      <button class="subtle-btn" id="closePlayer" type="button" title="Volver a cargar el episodio">↻ Recargar vídeo</button>
+    <div class="screen-footer sr-only">
+      <div id="playerStatus" role="status" aria-live="polite">Preparando el vídeo…</div>
+      
     </div>
     <section class="watch-episode-summary" aria-labelledby="episodeSynopsisHeading">
       <div class="watch-episode-summary-head">
@@ -27,7 +27,7 @@
           <span class="kicker">ACERCA DEL CAPÍTULO</span>
           <h2 id="episodeSynopsisHeading">Resumen del episodio</h2>
         </div>
-        <button type="button" id="toggleEpisodeSynopsis" class="summary-toggle" aria-expanded="true" aria-controls="episodeSynopsisText">Ocultar resumen <span aria-hidden="true">⌃</span></button>
+        <button type="button" id="toggleEpisodeSynopsis" class="summary-toggle" aria-expanded="true" aria-controls="episodeSynopsisText">Esconder <span aria-hidden="true">⌃</span></button>
       </div>
       <p id="episodeSynopsisText">Cargando la información del capítulo…</p>
     </section>
@@ -58,7 +58,7 @@
   </aside>
 </div></section></main>
 <footer class="site-footer container"><div class="footer-upper"><div class="brand"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></div><p>Historias para volver a descubrir, a tu ritmo.</p></div>
-<div class="footer-bottom"><span>© NubeToon · Proyecto personal · Sin contenido audiovisual alojado.</span><span>Metadatos e imágenes: <a href="https://www.tvmaze.com/" target="_blank" rel="noopener noreferrer">TVmaze</a> (CC BY-SA) · Al visitar esta pantalla se conecta VideoAPI</span></div></footer>
+<div class="footer-bottom"><span>© NubeToon · Proyecto personal · Sin contenido audiovisual alojado.</span><span>Metadatos e imágenes: <a href="https://www.tvmaze.com/" target="_blank" rel="noopener noreferrer">TVmaze</a> (CC BY-SA) · Reproducción integrada</span></div></footer>
 <nav class="nav-mobile" aria-label="Navegación móvil"><a href="index.html" class=""><span>⌂</span>Inicio</a><a href="catalogo.html" class=""><span>⌕</span>Explorar</a><a href="mi-lista.html" class=""><span>♡</span>Mi lista</a><a href="reproductor.html" class="is-active"><span>▷</span>Ver</a></nav>
 <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
 </div></body></html>
