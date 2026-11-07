@@ -109,3 +109,12 @@ La página `blog.html` permite crear y listar publicaciones editoriales asociada
 El formulario permite escribir título, autor, resumen, texto adicional, película o serie, destino y temporada/capítulo. Los nuevos posts se guardan en el **localStorage del navegador**. Como GitHub Pages es un alojamiento estático, estos cambios **no se comparten** con otros visitantes y no hay cuentas ni backend editorial. El botón «Exportar mis publicaciones» descarga un JSON con las entradas locales. Para hacerlas públicas, el propietario debe incorporar el contenido del archivo exportado al arreglo `posts` en `data/blog-posts.json` (manteniendo el formato) y publicar un commit en `main`. El flujo de Pages incluye ahora `blog.html` y la carpeta `data`.
 
 La distribución inicial lleva tres entradas **marcadas como ejemplos**, que enlazan a The Batman, Gravity Falls y Avatar. Puedes reemplazarlas o eliminarlas en `data/blog-posts.json`. Los textos de publicaciones externas, incluidos los de Blogspot, no se traducen automáticamente, mientras que la interfaz del Blog utiliza el selector ES/EN.
+
+
+## 12. Lectura de artículos y búsqueda por tipo
+
+Las tarjetas de `blog.html` abren `articulo.html?post=ID`, donde se presenta el contenido completo con párrafos legibles y únicamente al final el enlace interno a la ficha o al capítulo señalado. La URL original de Blogspot aparece después, cuando existe.
+
+El editor ofrece un selector **Película / Serie**, búsqueda restringida al tipo y resultados del catálogo local. Para ampliar resultados sin introducir claves, puede buscar series mediante TVmaze y películas mediante el catálogo público Cinemeta de Stremio; ambos servicios pueden fallar o cambiar. Una película encontrada fuera del catálogo puede guardarse localmente y tener su ficha en NubeToon. El reproductor requiere un ID TMDb válido, que puede no estar disponible para todos esos resultados. Tras seleccionar una serie, se habilita la opción de vincular un capítulo con temporada y episodio; cuando hay información de TVmaze se usa para presentar capítulos reales.
+
+La página de Inicio incorpora un acceso destacado al Blog. La acción de creación ahora es el control **«Comparte tus impresiones»** seguido de un botón cuadrado «+». El artículo se almacena localmente en `localStorage`, y los ejemplos públicos están en `data/blog-posts.json`. Para compartir publicaciones nuevas con todos los visitantes sigue siendo necesario añadirlas al repositorio, con sus títulos asociados.
