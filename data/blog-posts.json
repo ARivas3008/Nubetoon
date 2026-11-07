@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Entradas editoriales de ejemplo. Para publicar entradas compartidas, edite este JSON en GitHub.",
+  "posts": [
+    {
+      "id": "editorial-batman",
+      "title": "Gotham: el comienzo de The Batman",
+      "excerpt": "La primera temporada presenta una ciudad que exige un héroe distinto. Empieza por el capítulo que abre esta historia.",
+      "author": "NubeToon",
+      "date": "2026-11-07",
+      "mediaId": "batman-2004",
+      "target": "episode",
+      "season": 1,
+      "episode": 1,
+      "blogspotUrl": ""
+    },
+    {
+      "id": "editorial-gravity",
+      "title": "Los misterios que hacen especial a Gravity Falls",
+      "excerpt": "Un pueblo lleno de pistas, humor y secretos. Descubre la serie desde su ficha y elige por dónde comenzar.",
+      "author": "NubeToon",
+      "date": "2026-11-07",
+      "mediaId": "gravity-falls",
+      "target": "detail",
+      "season": 1,
+      "episode": 1,
+      "blogspotUrl": ""
+    },
+    {
+      "id": "editorial-avatar",
+      "title": "Un viaje por las cuatro naciones",
+      "excerpt": "La aventura de Aang comienza con una misión inesperada. Accede al primer capítulo para conocer su mundo.",
+      "author": "NubeToon",
+      "date": "2026-11-07",
+      "mediaId": "avatar",
+      "target": "episode",
+      "season": 1,
+      "episode": 1,
+      "blogspotUrl": ""
+    }
+  ]
+}

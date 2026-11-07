@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d18"><meta name="description" content="NubeToon · Tu universo visual de series, carátulas oficiales y reproducción opcional.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://static.tvmaze.com; media-src blob:; frame-src https://videoapi.la; connect-src 'self' https://api.tvmaze.com; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Blog · NubeToon</title>
+<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107j">
+<script defer src="scripts/i18n.js?v=20261107j"></script><script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/blog.js?v=20261107j"></script>
+</head>
+<body data-page="blog"><a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div class="site">
+<header class="site-header"><div class="header-wrap">
+<a class="brand" href="index.html" aria-label="NubeToon, Inicio"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></a>
+<nav class="nav-desktop" aria-label="Navegación principal"><a href="index.html" class="nav-link" >Inicio</a><a href="catalogo.html" class="nav-link " >Explorar</a><a href="mi-lista.html" class="nav-link " >Mi lista</a><a href="reproductor.html" class="nav-link " >Reproductor</a><a href="blog.html" class="nav-link is-active" aria-current="page">Blog</a></nav>
+<div class="header-right"><a class="icon-link" href="catalogo.html" title="Buscar títulos" aria-label="Buscar títulos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.4"/><path d="m16 16 5 5"/></svg></a><span class="nav-avatar" title="Catálogo personal">N</span></div>
+</div></header>
+<main id="contenido">
+<section class="blog-hero">
+ <div class="container blog-hero-content">
+   <p class="kicker">CUADERNO / NUBETOON</p>
+   <h1>Historias para <em>volver a descubrir.</em></h1>
+   <p class="blog-hero-description">Publicaciones, reseñas y recomendaciones de series y películas. Cada historia te lleva a su ficha o directamente al capítulo elegido.</p>
+   <div class="blog-hero-actions">
+     <button id="blogCompose" class="btn btn-primary" type="button" aria-controls="blogEditor" aria-expanded="false">＋ Nueva publicación</button>
+     <a href="#blogListStart" class="btn btn-outline">Explorar publicaciones ↗</a>
+   </div>
+ </div>
+</section>
+<section class="container blog-editor-shell" id="blogEditor" hidden aria-labelledby="blogFormHeading">
+  <div class="blog-editor-intro">
+    <div><span class="kicker">EDITOR / PUBLICACIONES</span><h2 id="blogFormHeading">Nueva publicación</h2></div>
+    <p>Las entradas creadas aquí se guardan en este navegador. Para hacerlas públicas hay que incorporarlas al repositorio.</p>
+  </div>
+  <form id="blogForm" class="blog-form">
+   <div class="blog-form-row">
+     <label>Nombre de la publicación <input id="blogTitle" name="title" required maxlength="130" placeholder="Ej.: Mi capítulo favorito" autocomplete="off"></label>
+     <label>Autor <input id="blogAuthor" name="author" maxlength="60" placeholder="NubeToon" autocomplete="off"></label>
+   </div>
+   <label>Resumen breve <textarea id="blogExcerpt" name="excerpt" rows="3" maxlength="420" required placeholder="Escribe un resumen atractivo de la publicación…"></textarea></label>
+   <label>Contenido adicional (opcional) <textarea id="blogBody" name="body" rows="4" maxlength="5000" placeholder="Observaciones, contexto o reseña…"></textarea></label>
+   <div class="blog-form-row">
+    <label>Película o serie del catálogo <select id="blogMedia" required></select></label>
+    <label>Al pulsar la publicación, abrir <select id="blogTarget"><option value="detail">Ficha de la película o serie</option><option value="episode">Capítulo específico</option></select></label>
+   </div>
+   <div class="blog-form-row blog-chapter-fields" id="blogChapterFields" hidden>
+    <label>Temporada <select id="blogSeason"></select></label>
+    <label>Episodio <select id="blogEpisode"></select></label>
+   </div>
+   <label>Enlace original de Blogspot (opcional) <input id="blogBlogspot" name="blogspot" type="url" inputmode="url" maxlength="500" placeholder="https://tublog.blogspot.com/2026/11/entrada.html"></label>
+   <div class="blog-editor-bottom">
+     <p>Las tarjetas enlazan a NubeToon. El enlace original de Blogspot se muestra por separado.</p>
+     <div class="blog-form-buttons"><button class="btn btn-outline" id="blogCancel" type="button">Cancelar</button><button class="btn btn-primary" type="submit" id="blogSave">Guardar publicación</button></div>
+   </div>
+  </form>
+</section>
+<section class="container blog-list-section" id="blogListStart">
+ <div class="blog-list-heading">
+  <div><span class="kicker">PUBLICACIONES / HISTORIAS</span><h2>Explora el <em>blog.</em></h2><p id="blogResults" class="blog-counter">Cargando publicaciones…</p></div>
+  <button class="blog-export" id="blogExport" type="button" disabled>↓ Exportar mis publicaciones</button>
+ </div>
+ <div class="blog-filters">
+   <label class="blog-search"><span aria-hidden="true">⌕</span><input type="search" id="blogSearch" placeholder="Buscar publicaciones…" aria-label="Buscar publicaciones" autocomplete="off"></label>
+   <div class="blog-filter-buttons" role="group" aria-label="Filtrar publicaciones">
+     <button type="button" class="blog-filter is-active" data-blog-filter="all" aria-pressed="true">Todas</button>
+     <button type="button" class="blog-filter" data-blog-filter="series" aria-pressed="false">Series</button>
+     <button type="button" class="blog-filter" data-blog-filter="episodes" aria-pressed="false">Capítulos</button>
+     <button type="button" class="blog-filter" data-blog-filter="movies" aria-pressed="false">Películas</button>
+   </div>
+ </div>
+ <div class="blog-grid" id="blogGrid" aria-live="polite"></div>
+ <div id="blogEmpty" class="blog-empty" hidden><h3>No hay publicaciones para mostrar.</h3><p>Crea una publicación o cambia los filtros para ver otras historias.</p></div>
+ <div class="blog-storage-note"><span class="blog-storage-dot" aria-hidden="true"></span><p><b id="blogLocalCount">0 entradas locales</b> · Las entradas creadas desde esta página solo se guardan en tu navegador. Las publicaciones compartidas se gestionan desde el repositorio.</p></div>
+</section>
+</main>
+<footer class="site-footer container"><div class="footer-upper"><div class="brand"><img class="logo-mark" src="assets/art/logo-mark.svg" alt="" width="38" height="38" decoding="async"><span>Nube<b>Toon</b><i>.</i></span></div><p>Historias para volver a descubrir, a tu ritmo.</p></div>
+<div class="footer-bottom"><span>© NubeToon · Proyecto personal · Sin contenido audiovisual alojado.</span><span>Metadatos e imágenes: <a href="https://www.tvmaze.com/" target="_blank" rel="noopener noreferrer">TVmaze</a> (CC BY-SA) · Reproducción externa opcional</span></div></footer>
+<nav class="nav-mobile" aria-label="Navegación móvil"><a href="index.html" class=""><span>⌂</span>Inicio</a><a href="catalogo.html" class=""><span>⌕</span>Explorar</a><a href="mi-lista.html" class=""><span>♡</span>Mi lista</a><a href="reproductor.html" class=""><span>▷</span>Ver</a><a href="blog.html" class="is-active"><span>✎</span>Blog</a></nav>
+<div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+</div></body></html>
