@@ -35,3 +35,102 @@ html,body,a,button,input,select,textarea,summary,label,[role="button"],
 .player-screen:focus-within{border-color:#a78bfa}
 .player-screen iframe{background:#0b071c}
 .player-screen video{accent-color:#a78bfa}
+
+
+/* Reproductor compacto: selección horizontal, desplegable y título dentro del vídeo. */
+.player-sidebar.player-sidebar-compact{
+  background:transparent;
+  border:none;
+  border-radius:0;
+  overflow:visible;
+}
+.episode-config{
+  background:linear-gradient(135deg,#19142d,#151b30);
+  border:1px solid rgba(156,125,250,.37);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 14px 45px rgba(13,9,38,.22);
+}
+.episode-config summary{
+  list-style:none;
+  min-height:76px;
+  padding:19px 21px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-size:15px;
+  font-weight:750;
+  cursor:pointer;
+  color:#f5f1ff;
+  -webkit-tap-highlight-color:transparent;
+}
+.episode-config summary::-webkit-details-marker{display:none}
+.episode-config summary:hover{background:rgba(146,105,255,.09)}
+.episode-config summary:focus-visible{outline:2px solid #b99aff;outline-offset:-3px}
+.episode-config-chevron{
+  width:11px;
+  height:11px;
+  flex:none;
+  border-right:2px solid #b9a6ff;
+  border-bottom:2px solid #b9a6ff;
+  transform:rotate(45deg) translateY(-2px);
+  transition:transform .2s var(--ease);
+}
+.episode-config[open] .episode-config-chevron{transform:rotate(225deg) translateY(-2px)}
+.episode-config-fields{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  padding:0 18px 21px;
+  border-top:1px solid rgba(177,153,250,.13);
+}
+.episode-config-fields>div{min-width:0;padding-top:16px}
+.episode-config-fields label{display:block;font-size:12px;color:#b8a9d9;margin:0 0 7px}
+.episode-config-fields select{
+  width:100%;
+  min-width:0;
+  background:#0d1122;
+  color:#f3f0ff;
+  border:1px solid #594779;
+  padding:12px 9px;
+  border-radius:10px;
+  font:600 12px Inter,'Segoe UI',system-ui,sans-serif;
+}
+.episode-config-fields select:focus-visible{outline:2px solid #b99aff;outline-offset:2px}
+.player-episode-badge{
+  position:absolute;
+  top:16px;
+  left:16px;
+  z-index:2;
+  display:flex;
+  max-width:min(calc(100% - 32px),460px);
+  gap:5px;
+  flex-direction:column;
+  pointer-events:none;
+  padding:10px 14px;
+  border-radius:11px;
+  background:linear-gradient(90deg,rgba(11,9,24,.84),rgba(18,14,42,.7));
+  border:1px solid rgba(190,162,255,.35);
+  box-shadow:0 10px 22px rgba(0,0,0,.24);
+}
+.player-episode-index{
+  color:#c2a7ff;
+  font:800 10px Inter,'Segoe UI',system-ui,sans-serif;
+  letter-spacing:.13em;
+}
+.player-episode-name{
+  color:#faf8ff;
+  font:750 clamp(12px,1.2vw,15px)/1.35 Inter,'Segoe UI',system-ui,sans-serif;
+}
+.player-screen iframe{z-index:1}
+@media(max-width:850px){
+  .player-sidebar.player-sidebar-compact{width:100%}
+  .episode-config summary{min-height:64px}
+}
+@media(max-width:610px){
+  .player-episode-badge{top:10px;left:10px;max-width:calc(100% - 20px);padding:7px 10px}
+  .episode-config-fields{gap:9px;padding:0 12px 16px}
+  .episode-config-fields select{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.episode-config-chevron{transition:none}}
