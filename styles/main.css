@@ -13,3 +13,10 @@ a.brand:hover .logo-mark{transform:rotate(-6deg) scale(1.055);filter:drop-shadow
 .footer-upper .brand .logo-mark{width:33px;height:33px}
 @media(max-width:610px){.brand .logo-mark{width:32px;height:32px}}
 @media(prefers-reduced-motion:reduce){.brand .logo-mark{transition:none!important}}
+
+
+/* Ajustes opcionales del reproductor externo: visibles y accesibles en móvil. */
+.remote-preferences{padding:14px;margin:13px 0;border:1px solid #3a455f;border-radius:12px;background:#0d1526}
+.control-section .remote-preferences>label:first-child{margin-top:0;font-weight:700}
+.control-section .remote-preferences .check-line{margin:14px 0 9px}
+.remote-preferences .field-hint{line-height:1.6;color:#9badc9}
