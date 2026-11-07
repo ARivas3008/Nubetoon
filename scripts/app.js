@@ -83,37 +83,58 @@
   function fallbackEpisodes(item){const list=[];const seasons=item.seasons.length?item.seasons:[13];seasons.forEach((count,i)=>{for(let j=1;j<=Math.min(count,60);j++)list.push({season:i+1,number:j,name:`${tr('Episodio')} ${j}`,summary:'',image:null,runtime:null});});return list;}
   async function getEpisodes(item){if(item.type==='movie')return [];if(item.tvmazeId){try{const eps=await API.episodes(item.tvmazeId);if(eps.length)return eps;}catch{}}return fallbackEpisodes(item);}
   function seasonsFor(item,episodes){const distinct=[...new Set(episodes.map(e=>Number(e.season)).filter(n=>n>0))].sort((a,b)=>a-b);return distinct.length?distinct:(item.type==='movie'?[]:[1]);}
+  function seasonPicker(select,prefix){
+    const root=$(prefix+'Picker'),trigger=$(prefix+'Trigger'),
+      value=$(prefix+'Value'),panel=$(prefix+'Panel'),
+      choices=$(prefix+'Choices'),dismiss=$(prefix+'Dismiss');
+    if(!root||!trigger||!panel||!choices)throw Error('Selector de temporada incompleto');
+    function close(restoreFocus=false){
+      panel.hidden=true;
+      trigger.setAttribute('aria-expanded','false');
+      root.classList.remove('is-open');
+      if(restoreFocus)trigger.focus();
+    }
+    function render(){
+      value.textContent=select.value||'—';
+      choices.replaceChildren();
+      for(const option of select.options){
+        const active=option.value===select.value;
+        const row=NT.el('button',{type:'button',class:'season-menu-choice'+(active?' is-current':''),'aria-pressed':String(active)});
+        row.append(NT.el('span',{},tr('Temporada')+' '+option.value),
+                   NT.el('span',{class:'season-menu-choice-mark','aria-hidden':'true'},active?'✓':'›'));
+        row.addEventListener('click',()=>{
+          const changed=select.value!==option.value;
+          select.value=option.value;
+          close(true);
+          if(changed)select.dispatchEvent(new Event('change',{bubbles:true}));
+          else render();
+        });
+        choices.append(row);
+      }
+      trigger.disabled=select.disabled;
+      if(select.disabled)close();
+    }
+    trigger.addEventListener('click',()=>{
+      if(!panel.hidden){close();return;}
+      render();
+      panel.hidden=false;
+      root.classList.add('is-open');
+      trigger.setAttribute('aria-expanded','true');
+      choices.querySelector('.is-current')?.focus();
+    });
+    dismiss.addEventListener('click',()=>close(true));
+    select.addEventListener('change',render);
+    document.addEventListener('pointerdown',event=>{if(!panel.hidden&&!root.contains(event.target))close();});
+    document.addEventListener('keydown',event=>{if(!panel.hidden&&event.key==='Escape'){event.preventDefault();close(true);}});
+    render();
+    return {render,close};
+  }
   function mountDetail(){(async()=>{
     let item=await resolveFromParams();if(!item){$('detailTitle').textContent=tr('No encontramos esta historia');$('detailDescription').textContent=tr('Vuelve al catálogo para seleccionar un título.');return;}
     let episodes=[];const select=$('detailSeason');let season=1;
+    const picker=seasonPicker(select,'detailSeason');
     function renderHero(){ $('detailTitle').textContent=item.title;$('detailKicker').textContent=`NUBETOON / ${filmType(item).toUpperCase()}`;setMeta($('detailMeta'),item);$('detailDescription').textContent=item.description?tr(item.description):tr('Una historia para descubrir en tu colección.');if(item.backdrop&&item.backdrop!==item.art)displayArtwork($('detailBackdrop'),item);if(item.from==='remote')$('dataAttribution').textContent=tr('Metadatos y carátulas: TVmaze · Identificador')+' '+item.tvmazeId;else $('dataAttribution').textContent=tr('Carteles y metadatos en línea: TVmaze (si están disponibles)');updateFav();}
     function updateFav(){const saved=NT.isFavorite(item);$('detailFavorite').textContent=saved?'♥ '+tr('En Mi lista'):'♡ '+tr('Añadir a Mi lista');$('detailFavorite').setAttribute('aria-pressed',String(saved));}
-    // Fullscreen del contenedor: mantiene visibles el nombre del capítulo
-    // y la interfaz del sitio. El fullscreen interno del iframe pertenece a VideoAPI.
-    function syncExpand(){
-      const expanded=document.fullscreenElement===screen;
-      expand.textContent=expanded?'⤢':'⛶';
-      expand.setAttribute('aria-label',expanded
-        ? tr('Salir de pantalla completa') : tr('Pantalla completa con el nombre del capítulo'));
-      expand.title=expand.getAttribute('aria-label');
-      screen.classList.toggle('is-outer-fullscreen',expanded);
-    }
-    expand.addEventListener('click',async()=>{
-      try{
-        if(document.fullscreenElement===screen){
-          await document.exitFullscreen();
-        }else if(screen.requestFullscreen){
-          await screen.requestFullscreen();
-        }else{
-          NT.notify(tr('Pantalla completa no disponible en este navegador.'));
-        }
-      }catch{
-        NT.notify(tr('Pantalla completa no disponible en este navegador.'));
-      }
-      syncExpand();
-    });
-    document.addEventListener('fullscreenchange',syncExpand);
-    syncExpand();
     function renderEpisodes(){const items=episodes.filter(e=>Number(e.season)===season).slice(0,80);$('watchFromDetail').href=NT.playerUrl(item,season,1);const list=$('detailEpisodes');list.replaceChildren();if(item.type==='movie'){list.append(NT.el('div',{class:'empty-state'},tr('Película: abre el reproductor para cargarla directamente con VideoAPI, si dispone de un ID de TMDb.')));return;}
       if(!items.length){list.append(NT.el('div',{class:'empty-state'},tr('No hay episodios registrados para esta temporada.')));return;}
       items.forEach(ep=>{const link=NT.el('a',{class:'episode-row',href:NT.playerUrl(item,season,Number(ep.number)||1)});const epArt=ep.image?.original||ep.image?.medium;link.append(img(epArt?NT.imageUrl(epArt,item.art):cover(item),'','episode-image'));const body=NT.el('div');body.append(NT.el('small',{},`T${String(ep.season).padStart(2,'0')} · E${String(ep.number).padStart(2,'0')}`),NT.el('h3',{},ep.name||`${tr('Episodio')} ${ep.number}`),NT.el('p',{},NT.cleanupText(ep.summary)||tr('Seleccionar este capítulo en el reproductor')));link.append(body,NT.el('span',{class:'episode-arrow','aria-hidden':'true'},'▷'));list.append(link);});
@@ -122,7 +143,7 @@
     select.addEventListener('change',()=>{season=Number(select.value)||1;renderEpisodes();});
     renderHero();
     const more=await API.enrich(item);item={...item,...more};renderHero();episodes=await getEpisodes(item);
-    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(String(s),String(s))));select.disabled=item.type==='movie';season=Number(select.value)||1;renderEpisodes();
+    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(String(s),String(s))));select.disabled=item.type==='movie';season=Number(select.value)||1;picker.render();renderEpisodes();
   })();}
   async function mountPlayer(){
     let item=await resolveFromParams();
@@ -132,10 +153,8 @@
     }
     let episodes=[],season=Number(NT.params().get('season'))||1,
         episode=Number(NT.params().get('episode'))||1,requestToken=0,embedToken=0;
-    const screen=$('videoScreen'),seasonSel=$('playerSeason'),expand=$('playerExpand');
-    const overlay=NT.el('div',{class:'player-episode-badge','aria-live':'polite'});
-    const episodeName=NT.el('strong',{class:'player-episode-name'});
-    overlay.append(episodeName);
+    const screen=$('videoScreen'),seasonSel=$('playerSeason');
+    const picker=seasonPicker(seasonSel,'playerSeason');
     const synopsisText=$('episodeSynopsisText');
     const toggleSynopsis=$('toggleEpisodeSynopsis');
     const poster=$('seriesInfoPoster');
@@ -191,7 +210,6 @@
       $('playerBreadcrumb').href=href;
       $('playerDetailLink').href=href;
       $('nextHeading').textContent=item.type==='movie'?tr('Más títulos'):tr('Episodios');
-      episodeName.textContent=fullEpisodeName();
       document.title=item.title+(item.type==='movie'?'':' · T'+season+' E'+episode)+' | NubeToon';
       NT.storeSelection(item,season,episode);
       updateEpisodeSummary();
@@ -247,7 +265,7 @@
       iframe.addEventListener('load',()=>{
         if(embedToken===load)$('playerStatus').textContent=tr('Reproductor listo.');
       });
-      screen.replaceChildren(iframe,overlay,expand);
+      screen.replaceChildren(iframe);
       $('playerStatus').textContent=tr('Conectando con el reproductor…');
     }
     function renderEpisodes(){
@@ -255,6 +273,7 @@
         seasonSel.disabled=true;
         seasonSel.replaceChildren(new Option('—','1'));
         $('playerEpisodeChips').replaceChildren();
+        picker.render();
         return;
       }
       seasonSel.disabled=false;
@@ -263,6 +282,7 @@
       // Solo se muestra el número de temporada; la etiqueta conserva el contexto.
       seasonSel.replaceChildren(...seasons.map(n=>new Option(String(n),String(n))));
       seasonSel.value=String(season);
+      picker.render();
       const inSeason=episodes.filter(e=>Number(e.season)===season).slice(0,80);
       const numbers=inSeason.map(e=>Number(e.number)).filter(n=>n>0);
       if(!numbers.includes(episode))episode=numbers[0]||1;
