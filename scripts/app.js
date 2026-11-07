@@ -145,9 +145,15 @@
       const id=tmdb.value.trim();if(!/^\d{1,9}$/.test(id)||Number(id)===0){NT.notify('Introduce un ID de TMDb válido (no de TVmaze).');tmdb.focus();return;}
       const kind=item.type==='movie'?'movie':item.type==='anime'?'anime':'tv';
       const path=kind==='movie'?`/e/movie/${id}`:`/e/${kind}/${id}/${season}/${episode}`;
+      // Estos parámetros están documentados por VideoAPI; no controlamos su reproductor interno.
+      const skin=$('remoteSkin').value,hideControls=$('remoteHideControls').checked;
+      const params=new URLSearchParams();
+      if(['prime','cinematic','netflix','disney','vidzilla'].includes(skin))params.set('skin',skin);
+      if(hideControls)params.set('hide_controls','1');
+      const embedUrl='https://videoapi.la'+path+(params.size?('?'+params.toString()):'');
       clearScreen();
-      const iframe=NT.el('iframe',{src:'https://videoapi.la'+path,title:'Reproductor de VideoAPI (proveedor externo)',sandbox:'allow-scripts allow-same-origin allow-forms allow-presentation',referrerpolicy:'origin',allow:'fullscreen; encrypted-media; picture-in-picture',allowfullscreen:''});
-      screen.replaceChildren(iframe);$('playerStatus').textContent='Se solicitó VideoAPI con tu consentimiento; puede no funcionar sin dominio autorizado.';
+      const iframe=NT.el('iframe',{src:embedUrl,title:'Reproductor de VideoAPI (proveedor externo)',sandbox:'allow-scripts allow-same-origin allow-forms allow-presentation',referrerpolicy:'origin',allow:'autoplay; fullscreen; encrypted-media; picture-in-picture',allowfullscreen:''});
+      screen.replaceChildren(iframe);$('playerStatus').textContent=hideControls?'VideoAPI: controles ocultos. Para pausarlo o avanzar, vuelve a activar los controles y conecta otra vez.':'Se solicitó VideoAPI con tu consentimiento; si persiste el icono central, cambia el estilo o utiliza la opción de ocultar controles.';
       $('remoteConsent').checked=false;$('connectRemote').disabled=true;
     });
     $('closePlayer').addEventListener('click',()=>clearScreen('Reproductor cerrado. Puedes seleccionar otra fuente.'));
