@@ -177,6 +177,7 @@
   "Movie": "Movie",
   "Ver todo": "See all"
 };
+  Object.assign(english,{"Abrir detalles":"Open details","Carátula de":"Poster of","Guardar o quitar":"Toggle favorite","de favoritos":"in favorites","Abrir ficha de":"Open details for","Seleccionar episodio":"Select episode","{n} títulos en tu biblioteca":"{n} titles in your library","{n} series encontradas":"{n} series found"});
   const key='nubetoon-ui-language';
   let saved=null;
   try{saved=localStorage.getItem(key);}catch{}
