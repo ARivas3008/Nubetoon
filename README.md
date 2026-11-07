@@ -120,3 +120,12 @@ El editor ofrece un selector **Película / Serie**, búsqueda restringida al tip
 La página de Inicio incorpora un acceso destacado al Blog. La acción de creación ahora es el control **«Comparte tus impresiones»** seguido de un botón cuadrado «+». El artículo se almacena localmente en `localStorage`, y los ejemplos públicos están en `data/blog-posts.json`. Para compartir publicaciones nuevas con todos los visitantes sigue siendo necesario añadirlas al repositorio, con sus títulos asociados.
 
 La búsqueda de películas también dispone de una alternativa manual claramente identificada como **ficha local**, en caso de que Cinemeta no responda. Esa ficha no presupone la disponibilidad del vídeo ni inventa metadatos.
+
+
+## 13. Listas compartidas (sin capítulos)
+
+`listas.html` permite explorar listas de series y películas. Cada lista tiene **título, un párrafo descriptivo y carátulas con nombres**, sin ningún dato de temporadas ni episodios. Al tocarla se abre `lista-compartida.html?list=ID`, con todas las carátulas y enlaces a las fichas individuales.
+
+El editor **«Comparte tus gustos»** permite buscar y agregar hasta veinte películas o series, reordenarlas y eliminarlas. Reutiliza TVmaze para series y Cinemeta para películas cuando sus servicios están disponibles; si no responden, sigue disponible el catálogo local. El resultado se guarda en `localStorage` (`nubetoon.shared-lists.v1`), con exportación JSON. Las listas creadas así son **locales** y no se comparten entre dispositivos automáticamente. Para hacerlas públicas, incorpora los datos exportados a `data/shared-lists.json` mediante commit. Incluye dos listas editoriales de inicio.
+
+La página de Inicio y la navegación tienen acceso a las listas; la vista de detalle ofrece compartir enlace solo cuando la lista ya es pública.
