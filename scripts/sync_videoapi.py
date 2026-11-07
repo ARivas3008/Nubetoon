@@ -60,7 +60,7 @@ def main():
                     item=normalize(raw,kind)
                     if item:buf.append(item)
                 if len(page_items)<LIMIT:break
-            except (URLError,HTTPError,TimeoutError,ValueError,KeyError) as exc:
+            except (OSError,ValueError,KeyError) as exc:
                 print(f"{kind}: {type(exc).__name__}: {exc}")
                 break
         if buf:
@@ -82,7 +82,7 @@ def main():
     try:
         result=read_json("/api/v1/catalog/public-stats")
         if isinstance(result.get("stats"),dict):stats=result["stats"]
-    except (URLError,HTTPError,TimeoutError,ValueError) as exc:
+    except (OSError,ValueError) as exc:
         print(f"Stats: {type(exc).__name__}: {exc}")
     if not distinct and not stats:
         print("VideoAPI unavailable: retaining checked-in JSON as safe fallback.")

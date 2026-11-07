@@ -44,7 +44,8 @@
   async function episodes(tvmazeId){const data=await request(`/shows/${encodeURIComponent(tvmazeId)}/episodes`);return Array.isArray(data)?data.filter(e=>Number(e.number)>0):[];}
   async function show(tvmazeId){return request(`/shows/${encodeURIComponent(tvmazeId)}`);}
   async function enrich(item,{withImages=true}={}) {
-    if(!item || item.type==='movie')return item;
+    if(!item || item.type==='movie'||item.type==='wwe'||item.type==='novel' ||
+      (item.source==='videoapi'&&String(item.apiName||'').startsWith('TMDb #')))return item;
     const enriched={...item};
     try {
       let result;
