@@ -1,7 +1,7 @@
 /* NubeToon pages — inicio / catalogo / detalle / reproductor / favoritos. */
 (() => {
   'use strict';
-  const NT=window.NT, API=window.NTAPI;
+  const NT=window.NT, API=window.NTAPI, VIDEO=window.NTVideoAPI;
   const tr=(key,values={})=>window.NTI?.t(String(key),values)||String(key);
   const $=id=>document.getElementById(id);
   let collection=[];
@@ -28,7 +28,14 @@
     node.append(link,fav,info);return node;
   }
   function showCards(node,items){if(!node)return;node.replaceChildren(...items.map(card));}
-  async function refreshImages(items,callback){const results=await Promise.all(items.map(it=>API.enrich(it)));results.forEach((item,i)=>Object.assign(items[i],item));callback();}
+  async function refreshImages(items,callback){
+    // No lanzar centenares de llamadas a TVmaze al cargar feeds amplios.
+    const eligible=items.filter(it=>it.type!=='movie'&&it.type!=='wwe'&&it.type!=='novel'&&it.source!=='videoapi').slice(0,28);
+    if(!eligible.length)return;
+    const results=await Promise.all(eligible.map(it=>API.enrich(it)));
+    results.forEach((item,i)=>Object.assign(eligible[i],item));
+    callback();
+  }
   function compact(item){const link=NT.el('a',{class:'compact-card',href:NT.detailUrl(item)});link.append(img(cover(item),''));const text=NT.el('div');text.append(NT.el('b',{},item.title),NT.el('p',{},[item.year,genreText(item)].filter(Boolean).join(' · ')));link.append(text);return link;}
   function mountHome(){
     const featured=findItem('batman-2004')||collection[0];
@@ -43,13 +50,13 @@
   }
   function mountCatalog(){
     let filter='Todas',sort='recommended',query='',results=[];let searchSeq=0;
-    const genres=['Todas','Acción','Aventura','Fantasía','Misterio','Comedia','Anime','Película'];
+    const genres=['Todas','Acción','Aventura','Fantasía','Misterio','Comedia','Anime','Película','Novela','WWE'];
     const chipWrap=$('genreChips');
     for(const name of genres){const b=NT.el('button',{type:'button',class:'chip'+(filter===name?' is-active':'')},tr(name));b.addEventListener('click',()=>{filter=name;chipWrap.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===b));render();});chipWrap.append(b);}
     function filtered(){const q=NT.normalize(query);const items=collection.filter(i=>{
       const t=NT.normalize([i.title,i.year,...i.genres].join(' '));
       const matchText=!q||t.includes(q);
-      const matchType=filter==='Todas'||filter==='Anime'&&i.type==='anime'||filter==='Película'&&i.type==='movie'||i.genres.some(g=>NT.normalize(g)===NT.normalize(filter));
+      const matchType=filter==='Todas'||filter==='Anime'&&i.type==='anime'||filter==='Película'&&i.type==='movie'||filter==='Novela'&&i.type==='novel'||filter==='WWE'&&i.type==='wwe'||i.genres.some(g=>NT.normalize(g)===NT.normalize(filter));
       return matchText&&matchType;
     });if(sort==='az')items.sort((a,b)=>a.title.localeCompare(b.title,'es'));if(sort==='latest')items.sort((a,b)=>b.year-a.year);return items;}
     function render(){const visible=filtered();showCards($('catalogGrid'),visible);$('localEmpty').hidden=visible.length!==0;$('resultsInfo').textContent=tr('{n} títulos en tu biblioteca',{n:visible.length});}
@@ -80,9 +87,9 @@
     return findItem(p.get('id')) || (NT.loadSelection()&&findItem(NT.loadSelection().id))||collection[0]||null;
   }
   function setMeta(container,item){container.replaceChildren();for(const value of [item.year||null,filmType(item),...item.genres.slice(0,2)]){if(value)container.append(NT.el('span',{},tr(value)));}}
-  function fallbackEpisodes(item){const list=[];const seasons=item.seasons.length?item.seasons:[13];seasons.forEach((count,i)=>{for(let j=1;j<=Math.min(count,60);j++)list.push({season:i+1,number:j,name:`${tr('Episodio')} ${j}`,summary:'',image:null,runtime:null});});return list;}
-  async function getEpisodes(item){if(item.type==='movie')return [];if(item.tvmazeId){try{const eps=await API.episodes(item.tvmazeId);if(eps.length)return eps;}catch{}}return fallbackEpisodes(item);}
-  function seasonsFor(item,episodes){const distinct=[...new Set(episodes.map(e=>Number(e.season)).filter(n=>n>0))].sort((a,b)=>a-b);return distinct.length?distinct:(item.type==='movie'?[]:[1]);}
+  function fallbackEpisodes(item){if(item.type==='wwe')return [];const list=[];const seasons=item.seasons.length?item.seasons:[13];seasons.forEach((count,i)=>{for(let j=1;j<=Math.min(count,60);j++)list.push({season:i+1,number:j,name:`${tr('Episodio')} ${j}`,summary:'',image:null,runtime:null});});return list;}
+  async function getEpisodes(item){if(item.type==='movie'||item.type==='wwe')return [];if(item.tvmazeId){try{const eps=await API.episodes(item.tvmazeId);if(eps.length)return eps;}catch{}}return fallbackEpisodes(item);}
+  function seasonsFor(item,episodes){const distinct=[...new Set(episodes.map(e=>Number(e.season)).filter(n=>n>0))].sort((a,b)=>a-b);return distinct.length?distinct:((item.type==='movie'||item.type==='wwe')?[]:[1]);}
   function seasonPicker(select,prefix){
     const root=$(prefix+'Picker'),trigger=$(prefix+'Trigger'),
       value=$(prefix+'Value'),panel=$(prefix+'Panel'),
@@ -135,7 +142,7 @@
     const picker=seasonPicker(select,'detailSeason');
     function renderHero(){ $('detailTitle').textContent=item.title;$('detailKicker').textContent=`NUBETOON / ${filmType(item).toUpperCase()}`;setMeta($('detailMeta'),item);$('detailDescription').textContent=item.description?tr(item.description):tr('Una historia para descubrir en tu colección.');if(item.backdrop&&item.backdrop!==item.art)displayArtwork($('detailBackdrop'),item);updateFav();}
     function updateFav(){const saved=NT.isFavorite(item);$('detailFavorite').textContent=saved?'♥ '+tr('En Mi lista'):'♡ '+tr('Añadir a Mi lista');$('detailFavorite').setAttribute('aria-pressed',String(saved));}
-    function renderEpisodes(){const items=episodes.filter(e=>Number(e.season)===season).slice(0,80);$('watchFromDetail').href=NT.playerUrl(item,season,1);const list=$('detailEpisodes');list.replaceChildren();if(item.type==='movie'){list.append(NT.el('div',{class:'empty-state'},tr('Película: abre el reproductor para cargarla directamente con VideoAPI, si dispone de un ID de TMDb.')));return;}
+    function renderEpisodes(){const items=episodes.filter(e=>Number(e.season)===season).slice(0,80);$('watchFromDetail').href=NT.playerUrl(item,season,1);const list=$('detailEpisodes');list.replaceChildren();if(item.type==='movie'||item.type==='wwe'){list.append(NT.el('div',{class:'empty-state'},tr('Película: abre el reproductor para cargarla directamente con VideoAPI, si dispone de un ID de TMDb.')));return;}
       if(!items.length){list.append(NT.el('div',{class:'empty-state'},tr('No hay episodios registrados para esta temporada.')));return;}
       items.forEach(ep=>{const link=NT.el('a',{class:'episode-row',href:NT.playerUrl(item,season,Number(ep.number)||1)});const epArt=ep.image?.original||ep.image?.medium;link.append(img(epArt?NT.imageUrl(epArt,item.art):cover(item),'','episode-image'));const body=NT.el('div');body.append(NT.el('small',{},`T${String(ep.season).padStart(2,'0')} · E${String(ep.number).padStart(2,'0')}`),NT.el('h3',{},ep.name||`${tr('Episodio')} ${ep.number}`),NT.el('p',{},NT.cleanupText(ep.summary)||tr('Seleccionar este capítulo en el reproductor')));link.append(body,NT.el('span',{class:'episode-arrow','aria-hidden':'true'},'▷'));list.append(link);});
     }
@@ -143,7 +150,7 @@
     select.addEventListener('change',()=>{season=Number(select.value)||1;renderEpisodes();});
     renderHero();
     const more=await API.enrich(item);item={...item,...more};renderHero();episodes=await getEpisodes(item);
-    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(String(s),String(s))));select.disabled=item.type==='movie';season=Number(select.value)||1;picker.render();renderEpisodes();
+    select.replaceChildren();seasonsFor(item,episodes).forEach(s=>select.add(new Option(String(s),String(s))));select.disabled=item.type==='movie'||item.type==='wwe';season=Number(select.value)||1;picker.render();renderEpisodes();
   })();}
   async function mountPlayer(){
     let item=await resolveFromParams();
@@ -161,23 +168,23 @@
     let summaryVisible=true;
     const selectedEpisode=()=>episodes.find(e=>Number(e.season)===season&&Number(e.number)===episode)||null;
     const episodeNameOnly=()=>{
-      if(item.type==='movie')return item.title;
+      if(item.type==='movie'||item.type==='wwe')return item.title;
       const name=NT.clean(selectedEpisode()?.name);
       return name||tr('Episodio')+' '+episode;
     };
     const fullEpisodeName=()=>{
-      if(item.type==='movie')return item.title;
+      if(item.type==='movie'||item.type==='wwe')return item.title;
       const name=episodeNameOnly();
       return NT.normalize(name)===NT.normalize(tr('Episodio')+' '+episode)
         ? name : tr('Episodio')+' '+episode+' · '+name;
     };
     function updateEpisodeSummary(){
       const ep=selectedEpisode();
-      $('episodeSynopsisHeading').textContent=item.type==='movie'?item.title:episodeNameOnly();
-      const description=item.type==='movie'
+      $('episodeSynopsisHeading').textContent=(item.type==='movie'||item.type==='wwe')?item.title:episodeNameOnly();
+      const description=(item.type==='movie'||item.type==='wwe')
         ? tr(NT.cleanupText(item.description))
         : NT.cleanupText(ep?.summary);
-      synopsisText.textContent=description||(item.type==='movie'
+      synopsisText.textContent=description||((item.type==='movie'||item.type==='wwe')
         ? tr('No hay sinopsis disponible para esta película.')
         : tr('Todavía no hay un resumen disponible para este capítulo.'));
     }
@@ -188,7 +195,7 @@
       $('seriesInfoLink').href=href;
       $('seriesInfoPosterLink').href=href;
       $('seriesInfoPosterLink').setAttribute('aria-label',tr('Abrir ficha de')+' '+item.title);
-      $('seriesInfoKicker').textContent=item.type==='movie'?tr('SOBRE LA PELÍCULA'):tr('SOBRE LA SERIE');
+      $('seriesInfoKicker').textContent=(item.type==='movie'||item.type==='wwe')?tr('SOBRE LA PELÍCULA'):tr('SOBRE LA SERIE');
       $('seriesInfoMeta').textContent=[item.year||null,filmType(item),...(item.genres||[]).slice(0,2)].filter(Boolean).join(' · ');
       $('seriesInfoDescription').textContent=(item.description?tr(NT.cleanupText(item.description)):'')||tr('La sinopsis de este título todavía no está disponible.');
       poster.src=cover(item);
@@ -203,14 +210,14 @@
       $('playerTitle').href=href;
       $('playerTitle').title=tr('Abrir ficha de')+' '+item.title;
       const label=fullEpisodeName();
-      $('playerSubtitle').textContent=item.type==='movie'
+      $('playerSubtitle').textContent=(item.type==='movie'||item.type==='wwe')
         ? tr('Película')+(item.year?' · '+item.year:'')
         : tr('Temporada')+' '+season+' · '+label;
       $('playerBreadcrumb').textContent=item.title;
       $('playerBreadcrumb').href=href;
       $('playerDetailLink').href=href;
-      $('nextHeading').textContent=item.type==='movie'?tr('Más títulos'):tr('Episodios');
-      document.title=item.title+(item.type==='movie'?'':' · T'+season+' E'+episode)+' | NubeToon';
+      $('nextHeading').textContent=(item.type==='movie'||item.type==='wwe')?tr('Más títulos'):tr('Episodios');
+      document.title=item.title+((item.type==='movie'||item.type==='wwe')?'':' · T'+season+' E'+episode)+' | NubeToon';
       NT.storeSelection(item,season,episode);
       updateEpisodeSummary();
       const target=NT.playerUrl(item,season,episode);
@@ -230,21 +237,17 @@
       $('playerStatus').textContent=message;
     }
     function videoUrl(){
-      const id=Number(item.tmdb);
-      if(!Number.isSafeInteger(id)||id<=0||id>999999999)return null;
-      const kind=item.type==='movie'?'movie':item.type==='anime'?'anime':'tv';
-      const path=kind==='movie'?'/e/movie/'+id:'/e/'+kind+'/'+id+'/'+season+'/'+episode;
-      const options=new URLSearchParams({
-        skin:'prime',
-        primary_color:'8B5CF6',
-        secondary_color:'17102B',
-        icon_color:'F5F3FF',
-        hide_title:'0',
-        hide_controls:'0',
-        subtitles:'1',
-        quality_selector:'1'
-      });
-      return 'https://videoapi.la'+path+'?'+options.toString();
+      try{
+        if(!VIDEO)return null;
+        return VIDEO.buildEmbed({
+          type:item.type,tmdb:item.tmdb,season,episode,
+          options:{
+            skin:'prime',primary_color:'8B5CF6',secondary_color:'17102B',
+            icon_color:'F5F3FF',hide_title:0,hide_controls:0,
+            subtitles:1,quality_selector:1,skip_intro:1,thumbnails:1
+          }
+        });
+      }catch{return null}
     }
     function loadEpisode(){
       const url=videoUrl();
@@ -267,9 +270,20 @@
       });
       screen.replaceChildren(iframe);
       $('playerStatus').textContent=tr('Conectando con el reproductor…');
+      // Comprobar el contrato público sin bloquear el iframe si CORS no está habilitado.
+      if(VIDEO){
+        VIDEO.exists({type:item.type,tmdb:item.tmdb,season,episode}).then(result=>{
+          if(embedToken!==load)return;
+          if(result.verified&&result.available===false){
+            $('playerStatus').textContent=tr('Este título no figura como disponible en el catálogo del proveedor.');
+          }else if(result.verified&&result.available===true){
+            screen.dataset.providerAvailability='available';
+          }
+        }).catch(()=>{});
+      }
     }
     function renderEpisodes(){
-      if(item.type==='movie'){
+      if(item.type==='movie'||item.type==='wwe'){
         seasonSel.disabled=true;
         seasonSel.replaceChildren(new Option('—','1'));
         $('playerEpisodeChips').replaceChildren();
