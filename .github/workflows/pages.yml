@@ -1,0 +1,78 @@
+name: Publicar NubeToon en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nubetoon-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Preparar y publicar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Extraer recursos del paquete original
+        shell: bash
+        run: |
+          python -m pip install --quiet brotli==1.1.0
+          python - <<'PY'
+          import base64, brotli, io, pathlib, tarfile
+          source = pathlib.Path('.bundle/recursos.tar.br.b64').read_text().strip()
+          payload = brotli.decompress(base64.b64decode(source))
+          with tarfile.open(fileobj=io.BytesIO(payload), mode='r:') as tar:
+              for member in tar.getmembers():
+                  path = pathlib.PurePosixPath(member.name)
+                  if path.is_absolute() or '..' in path.parts or path.parts[0] not in {'assets', 'styles', 'scripts', 'data'}:
+                      raise ValueError('Archivo no permitido en el paquete: ' + member.name)
+                  if not member.isfile():
+                      raise ValueError('Solo archivos normales admitidos')
+              tar.extractall(path='.', filter='data')
+          print('Recursos del sitio restaurados correctamente')
+          PY
+
+      - name: Guardar HTML, CSS, JavaScript, JSON e imagenes como archivos del repositorio
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets styles scripts data
+          if ! git diff --cached --quiet; then
+            git commit -m "Agregar codigo fuente y recursos del sitio NubeToon"
+            git push origin HEAD:main
+          fi
+
+      - name: Habilitar y configurar GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Preparar sitio estatico
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp index.html catalogo.html detalle.html reproductor.html mi-lista.html _site/
+          cp -R assets styles scripts data _site/
+          touch _site/.nojekyll
+
+      - name: Subir sitio
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4
