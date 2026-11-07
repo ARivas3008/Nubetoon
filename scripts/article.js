@@ -77,10 +77,47 @@
       ?tr('Continúa con el capítulo seleccionado')
       :tr('Descubre la película o serie');
     callout.append(node('p','kicker',tr('CONTINÚA EN NUBETOON')),
-                   node('h2','',associated),
-                   node('p','',item.title+(post.target==='episode'?' · T'+post.season+' E'+post.episode:'')));
-    const button=NT.el('a',{class:'btn btn-primary',href:destination(post,item)},post.target==='episode'?tr('Ir al capítulo')+' ↗':tr('Abrir ficha')+' ↗');
-    callout.append(button);
+                   node('h2','',associated));
+    if(post.target==='episode' && item.type!=='movie'){
+      // Reutiliza el diseño de las filas de episodios de la ficha de la serie.
+      // Se renderiza inmediatamente y se completa con TVmaze cuando responde.
+      const season=Math.max(1,Math.floor(Number(post.season)||1));
+      const episode=Math.max(1,Math.floor(Number(post.episode)||1));
+      const number='T'+String(season).padStart(2,'0')+' · E'+String(episode).padStart(2,'0');
+      const row=NT.el('a',{
+        class:'episode-row blog-related-episode',
+        href:destination(post,item),
+        'aria-label':tr('Ver capítulo')+' '+number+' · '+item.title
+      });
+      const image=NT.el('img',{
+        class:'episode-image',
+        src:NT.imageUrl(item.poster,item.art),
+        alt:'',loading:'lazy',decoding:'async'
+      });
+      image.addEventListener('error',()=>{image.src='assets/art/default.svg'},{once:true});
+      const info=node('div','blog-related-episode-copy');
+      const heading=node('h3','',tr('Episodio')+' '+episode);
+      const summary=node('p','',tr('Seleccionar este capítulo en el reproductor'));
+      info.append(node('small','',number),heading,summary);
+      row.append(image,info,node('span','episode-arrow','▷'));
+      callout.append(row);
+      // No se supone ni inventa información del episodio: se solicita por ID real.
+      (async()=>{
+        const enriched=await window.NTAPI.enrich(item,{withImages:false});
+        const tvmazeId=Number(enriched?.tvmazeId);
+        if(!tvmazeId)return;
+        const episodes=await window.NTAPI.episodes(tvmazeId);
+        const found=episodes.find(ep=>Number(ep.season)===season&&Number(ep.number)===episode);
+        if(!found)return;
+        heading.textContent=clean(found.name,180)||heading.textContent;
+        summary.textContent=NT.cleanupText(found.summary)||summary.textContent;
+        const episodeArt=found.image?.original||found.image?.medium;
+        if(episodeArt)image.src=NT.imageUrl(episodeArt,item.art);
+      })().catch(()=>{/* La fila sigue disponible aunque TVmaze no responda. */});
+    }else{
+      callout.append(node('p','blog-article-target-name',item.title));
+      callout.append(NT.el('a',{class:'btn btn-primary',href:destination(post,item)},tr('Abrir ficha')+' ↗'));
+    }
     const source=safeUrl(post.blogspotUrl);
     if(source)callout.append(NT.el('a',{href:source,target:'_blank',rel:'noopener noreferrer',class:'blog-article-source'},tr('Leer entrada original en Blogspot')+' ↗'));
     root.replaceChildren(node('p','kicker',tr('ARTÍCULO / NUBETOON')),node('h1','blog-article-title',title),meta,
