@@ -31,7 +31,7 @@ jobs:
       - name: Preparar los archivos publicos
         run: |
           mkdir -p _site
-          cp index.html catalogo.html detalle.html reproductor.html mi-lista.html _site/
+          cp index.html catalogo.html detalle.html reproductor.html mi-lista.html blog.html _site/
           cp -R assets styles scripts data _site/
           touch _site/.nojekyll
 
