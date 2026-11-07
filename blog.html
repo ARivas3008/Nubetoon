@@ -2,10 +2,10 @@
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#090d18"><meta name="description" content="NubeToon · Tu universo visual de series, carátulas oficiales y reproducción opcional.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://static.tvmaze.com; media-src blob:; frame-src https://videoapi.la; connect-src 'self' https://api.tvmaze.com; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://static.tvmaze.com; media-src blob:; frame-src https://videoapi.la; connect-src 'self' https://api.tvmaze.com https://v3-cinemeta.strem.io; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Blog · NubeToon</title>
-<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107k">
-<script defer src="scripts/i18n.js?v=20261107k"></script><script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/blog.js?v=20261107k"></script>
+<link rel="icon" href="assets/art/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles/main.css?v=20261107m">
+<script defer src="scripts/i18n.js?v=20261107m"></script><script defer src="data/catalog-fallback.js"></script><script defer src="scripts/core.js"></script><script defer src="scripts/api.js"></script><script defer src="scripts/blog.js?v=20261107m"></script>
 </head>
 <body data-page="blog"><a class="skip-link" href="#contenido">Saltar al contenido</a>
 <div class="site">
@@ -21,8 +21,10 @@
    <h1>Historias para <em>volver a descubrir.</em></h1>
    <p class="blog-hero-description">Publicaciones, reseñas y recomendaciones de series y películas. Cada historia te lleva a su ficha o directamente al capítulo elegido.</p>
    <div class="blog-hero-actions">
-     <button id="blogCompose" class="btn btn-primary" type="button" aria-controls="blogEditor" aria-expanded="false">＋ Nueva publicación</button>
-     <a href="#blogListStart" class="btn btn-outline">Explorar publicaciones ↗</a>
+     <div class="blog-invite">
+       <span>Comparte tus impresiones</span>
+       <button id="blogCompose" class="blog-compose-square" type="button" aria-label="Crear publicación" title="Crear publicación" aria-controls="blogEditor" aria-expanded="false">+</button>
+     </div>
    </div>
  </div>
 </section>
@@ -37,18 +39,33 @@
      <label>Autor <input id="blogAuthor" name="author" maxlength="60" placeholder="NubeToon" autocomplete="off"></label>
    </div>
    <label>Resumen breve <textarea id="blogExcerpt" name="excerpt" rows="3" maxlength="420" required placeholder="Escribe un resumen atractivo de la publicación…"></textarea></label>
-   <label>Contenido adicional (opcional) <textarea id="blogBody" name="body" rows="4" maxlength="5000" placeholder="Observaciones, contexto o reseña…"></textarea></label>
-   <div class="blog-form-row">
-    <label>Película o serie del catálogo <select id="blogMedia" required></select></label>
-    <label>Al pulsar la publicación, abrir <select id="blogTarget"><option value="detail">Ficha de la película o serie</option><option value="episode">Capítulo específico</option></select></label>
-   </div>
-   <div class="blog-form-row blog-chapter-fields" id="blogChapterFields" hidden>
-    <label>Temporada <select id="blogSeason"></select></label>
-    <label>Episodio <select id="blogEpisode"></select></label>
+   <label>Artículo completo <textarea id="blogBody" name="body" rows="8" maxlength="5000" minlength="70" required placeholder="Desarrolla tu artículo aquí. Separa los párrafos con una línea en blanco…"></textarea></label>
+   <div class="blog-media-chooser">
+     <span class="blog-field-title">¿De qué quieres escribir?</span>
+     <div class="blog-media-switch" role="group" aria-label="Tipo de contenido">
+       <button type="button" class="blog-media-kind" data-media-kind="movie" aria-pressed="false">Película</button>
+       <button type="button" class="blog-media-kind is-active" data-media-kind="series" aria-pressed="true">Serie</button>
+     </div>
+     <label class="blog-media-search-label">Buscar serie o película
+       <input type="search" id="blogMediaSearch" placeholder="Buscar serie…" autocomplete="off" aria-controls="blogMediaResults">
+     </label>
+     <input type="hidden" id="blogMedia">
+     <div class="blog-media-results" id="blogMediaResults" role="group" aria-label="Resultados de películas o series"></div>
+     <p id="blogMediaStatus" class="blog-media-status" role="status" aria-live="polite">Selecciona una serie de los resultados para continuar.</p>
+     <div class="blog-selected-media" id="blogSelectedMedia" hidden aria-live="polite"></div>
+     <div class="blog-selected-target" id="blogTargetArea" hidden>
+       <label>Enlace del artículo
+         <select id="blogTarget"><option value="detail">Ficha de la película o serie</option><option value="episode">Capítulo específico</option></select>
+       </label>
+       <div class="blog-form-row blog-chapter-fields" id="blogChapterFields" hidden>
+         <label>Temporada <select id="blogSeason"></select></label>
+         <label>Episodio <select id="blogEpisode"></select></label>
+       </div>
+     </div>
    </div>
    <label>Enlace original de Blogspot (opcional) <input id="blogBlogspot" name="blogspot" type="url" inputmode="url" maxlength="500" placeholder="https://tublog.blogspot.com/2026/11/entrada.html"></label>
    <div class="blog-editor-bottom">
-     <p>Las tarjetas enlazan a NubeToon. El enlace original de Blogspot se muestra por separado.</p>
+     <p>Primero se publica el artículo y, al final, el lector encuentra el enlace a la película o capítulo. Tus borradores se guardan en este navegador.</p>
      <div class="blog-form-buttons"><button class="btn btn-outline" id="blogCancel" type="button">Cancelar</button><button class="btn btn-primary" type="submit" id="blogSave">Guardar publicación</button></div>
    </div>
   </form>

@@ -6,6 +6,7 @@
   const tr=(text)=>window.NTI?.t(text)||text;
   const STORAGE_KEY='nubetoon.blog.local.v1';
   let catalog=[],published=[],localPosts=[],editingId=null,viewFilter='all';
+  let mediaKind='series',selectedMedia=null,searchTimer=0,searchSequence=0,episodesForChoice=[];
   const dateLocale=()=>window.NTI?.lang==='en'?'en-US':'es-PE';
   const clean=(value,length=1000)=>String(value??'').trim().slice(0,length);
   const fallbackPoster='assets/art/default.svg';
@@ -21,7 +22,14 @@
   const normalizePost=(raw,scope='local')=>{
     if(!raw||typeof raw!=='object')return null;
     const title=clean(raw.title,130),excerpt=clean(raw.excerpt,420);
-    const mediaId=clean(raw.mediaId,130),item=catalog.find(x=>x.id===mediaId);
+    const mediaId=clean(raw.mediaId,130);
+    let item=catalog.find(x=>x.id===mediaId);
+    if(!item && raw.mediaSnapshot){
+      const snapshot=NT.sanitize(raw.mediaSnapshot);
+      if(snapshot && snapshot.id===mediaId){
+        catalog.push(snapshot); item=snapshot;
+      }
+    }
     const target=raw.target==='episode'&&item?.type!=='movie'?'episode':'detail';
     const season=Math.max(1,Math.min(100,Math.floor(Number(raw.season)||1)));
     const episode=Math.max(1,Math.min(300,Math.floor(Number(raw.episode)||1)));
@@ -35,6 +43,11 @@
       date:/^\d{4}-\d{2}-\d{2}$/.test(raw.date)?raw.date:new Date().toISOString().slice(0,10),
       mediaId,target,season,episode,blogspotUrl:url,
       demo:raw.demo===true,
+      mediaSnapshot:raw.mediaSnapshot&&typeof raw.mediaSnapshot==='object'?{
+        id:mediaId,title:item.title,type:item.type,year:item.year,
+        art:item.art,tmdb:item.tmdb,tvmazeId:item.tvmazeId,
+        apiName:item.apiName,seasons:item.seasons,description:item.description
+      }:null,
       scope
     };
   };
@@ -70,7 +83,7 @@
   function renderPost(post){
     const item=getItem(post);
     const article=NT.el('article',{class:'blog-post'+(post.scope==='local'?' is-local':'')});
-    const link=NT.el('a',{class:'blog-post-link',href:destination(post),'aria-label':tr('Abrir destino')+': '+post.title});
+    const link=NT.el('a',{class:'blog-post-link',href:'articulo.html?post='+encodeURIComponent(post.id),'aria-label':tr('Leer artículo')+': '+post.title});
     const media=NT.el('div',{class:'blog-post-media'});
     const img=NT.el('img',{src:NT.imageUrl(item?.poster,item?.art),alt:tr('Carátula de')+' '+item.title,loading:'lazy',decoding:'async'});
     img.addEventListener('error',()=>{img.src=fallbackPoster;},{once:true});
@@ -82,14 +95,11 @@
     const title=NT.el('h3',{},post.title);
     const description=NT.el('p',{class:'blog-post-excerpt'},post.excerpt);
     const footer=NT.el('div',{class:'blog-post-target'});
-    footer.append(NT.el('span',{},item.title),NT.el('b',{},targetLabel(post)+' ↗'));
+    footer.append(NT.el('span',{},item.title),NT.el('b',{},tr('Leer artículo')+' ↗'));
     text.append(meta,title,description,footer);
     link.append(media,text);
     article.append(link);
     const extras=NT.el('div',{class:'blog-post-extras'});
-    if(post.blogspotUrl){
-      extras.append(NT.el('a',{href:post.blogspotUrl,target:'_blank',rel:'noopener noreferrer',class:'blog-original-link'},tr('Leer en Blogspot')+' ↗'));
-    }
     if(post.scope==='local'){
       const edit=NT.el('button',{type:'button',class:'blog-subtle'},tr('Editar'));
       edit.addEventListener('click',()=>beginEdit(post));
@@ -121,25 +131,157 @@
     $('blogLocalCount').textContent=localPosts.length+' '+tr(localPosts.length===1?'entrada local':'entradas locales');
     $('blogExport').disabled=!localPosts.length;
   }
+  const isSeries=item=>item&&(item.type==='tv'||item.type==='anime');
+  const matchesKind=item=>mediaKind==='movie'?item.type==='movie':isSeries(item);
+  function notifyMedia(message){$('blogMediaStatus').textContent=message}
   function syncTargets(){
-    const id=$('blogMedia').value;
-    const media=catalog.find(item=>item.id===id);
-    const target=$('blogTarget');
-    const episodeOption=[...target.options].find(opt=>opt.value==='episode');
-    if(!media)return;
-    episodeOption.disabled=media.type==='movie';
-    if(media.type==='movie')target.value='detail';
-    const isEpisode=target.value==='episode';
-    $('blogChapterFields').hidden=!isEpisode;
-    if(!isEpisode)return;
-    const season=$('blogSeason'),ep=$('blogEpisode');
-    const seasonNum=Number(season.value)||1,epNum=Number(ep.value)||1;
-    const total=Math.max(1,Math.min(30,media.seasons?.length||1));
-    season.replaceChildren(...Array.from({length:total},(_,i)=>new Option(String(i+1),String(i+1))));
-    season.value=String(Math.min(total,seasonNum));
-    const count=Math.max(1,Math.min(60,Number(media.seasons?.[Number(season.value)-1])||13));
-    ep.replaceChildren(...Array.from({length:count},(_,i)=>new Option(String(i+1),String(i+1))));
-    ep.value=String(Math.min(count,epNum));
+    const item=selectedMedia;
+    $('blogMedia').value=item?.id||'';
+    $('blogTargetArea').hidden=!item;
+    $('blogSelectedMedia').hidden=!item;
+    if(!item){
+      $('blogChapterFields').hidden=true;
+      $('blogSelectedMedia').replaceChildren();
+      return;
+    }
+    $('blogSelectedMedia').replaceChildren(
+      NT.el('span',{class:'blog-selected-check','aria-hidden':'true'},'✓'),
+      NT.el('span',{},item.title+(item.year?' · '+item.year:'')),
+      NT.el('button',{type:'button',id:'blogClearMedia','aria-label':tr('Cambiar título')},'×')
+    );
+    $('blogClearMedia').addEventListener('click',()=>{selectedMedia=null;episodesForChoice=[];syncTargets();runSearch()});
+    const sel=$('blogTarget');
+    const option=[...sel.options].find(x=>x.value==='episode');
+    option.disabled=!isSeries(item);
+    if(!isSeries(item))sel.value='detail';
+    $('blogChapterFields').hidden=sel.value!=='episode'||!isSeries(item);
+    if(!$('blogChapterFields').hidden)populateChapters();
+  }
+  function populateChapters(){
+    if(!selectedMedia||!isSeries(selectedMedia))return;
+    const s=$('blogSeason'),e=$('blogEpisode'),selectedSeason=Number(s.value)||1,selectedEpisode=Number(e.value)||1;
+    const fromApi=[...new Set(episodesForChoice.map(x=>Number(x.season)))].filter(x=>x>0).sort((a,b)=>a-b);
+    const fallback=selectedMedia.seasons?.length||1;
+    const seasons=fromApi.length?fromApi:Array.from({length:Math.max(1,Math.min(30,fallback))},(_,i)=>i+1);
+    s.replaceChildren(...seasons.map(n=>new Option(String(n),String(n))));
+    s.value=String(seasons.includes(selectedSeason)?selectedSeason:seasons[0]);
+    const bySeason=episodesForChoice.filter(x=>Number(x.season)===Number(s.value));
+    const counts=Math.min(80,Math.max(1,Number(selectedMedia.seasons?.[Number(s.value)-1])||13));
+    const choices=bySeason.length?bySeason.map(x=>({n:Number(x.number),name:String(x.name||'')})).filter(x=>x.n>0):
+      Array.from({length:counts},(_,i)=>({n:i+1,name:''}));
+    e.replaceChildren(...choices.map(x=>new Option(String(x.n)+(x.name?' · '+x.name:''),String(x.n))));
+    e.value=String(choices.some(x=>x.n===selectedEpisode)?selectedEpisode:choices[0]?.n||1);
+  }
+  async function loadEpisodeData(item){
+    episodesForChoice=[];
+    if(!item.tvmazeId||!isSeries(item))return;
+    try{
+      const response=await window.NTAPI.episodes(item.tvmazeId);
+      if(selectedMedia?.id===item.id){
+        episodesForChoice=Array.isArray(response)?response:[];
+        if(!$('blogChapterFields').hidden)populateChapters();
+      }
+    }catch{/* Fallback uses season counts already stored in catalog. */}
+  }
+  function chooseMedia(item){
+    selectedMedia=item;
+    if(!catalog.some(existing=>existing.id===item.id))catalog.push(item);
+    $('blogMediaSearch').value='';
+    $('blogMediaResults').replaceChildren();
+    $('blogTarget').value='detail';
+    $('blogSeason').replaceChildren(new Option('1','1'));
+    $('blogEpisode').replaceChildren(new Option('1','1'));
+    notifyMedia(tr('Título seleccionado.'));
+    syncTargets();
+    loadEpisodeData(item);
+  }
+  function setMediaKind(kind,reset=true){
+    mediaKind=kind==='movie'?'movie':'series';
+    document.querySelectorAll('[data-media-kind]').forEach(button=>{
+      const current=button.dataset.mediaKind===mediaKind;
+      button.classList.toggle('is-active',current);
+      button.setAttribute('aria-pressed',String(current));
+    });
+    $('blogMediaSearch').placeholder=tr(mediaKind==='movie'?'Buscar película…':'Buscar serie…');
+    if(reset){selectedMedia=null;episodesForChoice=[];$('blogTarget').value='detail';$('blogMediaSearch').value=''}
+    syncTargets();runSearch();
+  }
+  function showMediaResults(items,message){
+    const result=$('blogMediaResults');
+    result.replaceChildren();
+    if(selectedMedia){return}
+    if(!items.length){
+      notifyMedia(message||tr('No se encontraron títulos.'));
+      return;
+    }
+    notifyMedia(tr('Selecciona un resultado para continuar.'));
+    const unique=new Set();
+    for(const entry of items.slice(0,12)){
+      const item=entry.item;
+      if(unique.has(item.id))continue;
+      unique.add(item.id);
+      const button=NT.el('button',{type:'button',class:'blog-media-result'});
+      button.append(
+        NT.el('span',{class:'blog-media-result-icon','aria-hidden':'true'},mediaKind==='movie'?'▣':'▤'),
+        NT.el('span',{class:'blog-media-result-name'},item.title),
+        NT.el('small',{},item.year||'—')
+      );
+      button.addEventListener('click',async()=>{
+        if(entry.imdbId){
+          // The public Cinemeta metadata may include a TMDb reference; never invent it.
+          try{
+            const data=await fetch('https://v3-cinemeta.strem.io/meta/movie/'+encodeURIComponent(entry.imdbId)+'.json');
+            if(data.ok){
+              const meta=(await data.json()).meta;
+              const tmdb=Number(meta?.moviedb_id);
+              if(Number.isSafeInteger(tmdb)&&tmdb>0)item.tmdb=tmdb;
+            }
+          }catch{/* Item remains a valid movie, even without a TMDb identifier. */}
+        }
+        chooseMedia(item);
+      });
+      result.append(button);
+    }
+  }
+  async function runSearch(){
+    const token=++searchSequence;
+    const term=NT.clean($('blogMediaSearch').value).slice(0,80);
+    const locals=catalog.filter(matchesKind).filter(x=>!term||NT.normalize(x.title).includes(NT.normalize(term)))
+      .slice(0,8).map(item=>({item}));
+    showMediaResults(locals,term?tr('No se encontraron títulos.'):tr('Escribe el nombre para buscar.'));
+    if(selectedMedia||term.length<2)return;
+    notifyMedia(tr('Buscando títulos…'));
+    try{
+      let remote=[];
+      if(mediaKind==='series'){
+        const shows=await window.NTAPI.search(term);
+        remote=shows.slice(0,12).map(show=>({item:window.NTAPI.fromShow(show)}))
+          .filter(x=>x.item&&matchesKind(x.item));
+      }else{
+        const endpoint='https://v3-cinemeta.strem.io/catalog/movie/top/search='+encodeURIComponent(term)+'.json';
+        const controller=new AbortController();
+        const kill=setTimeout(()=>controller.abort(),7000);
+        let response;
+        try{response=await fetch(endpoint,{signal:controller.signal,mode:'cors'});}finally{clearTimeout(kill)}
+        if(!response.ok)throw Error('Film search unavailable');
+        const data=await response.json();
+        remote=(Array.isArray(data.metas)?data.metas:[]).slice(0,20).filter(x=>/^tt\d{5,12}$/.test(String(x.id||'')))
+          .map(meta=>{
+            const year=Number(String(meta.releaseInfo||'').match(/\b(?:19|20)\d{2}\b/)?.[0])||0;
+            const item=NT.sanitize({
+              id:'imdb-'+meta.id,title:meta.name,type:'movie',year,art:'assets/art/default.svg',
+              tag:'CINEMETA',apiName:meta.name,description:''
+            });
+            return {item,imdbId:String(meta.id)};
+          }).filter(x=>x.item);
+      }
+      if(token!==searchSequence||selectedMedia)return;
+      const all=[...locals,...remote].filter(x=>x.item&&matchesKind(x.item));
+      showMediaResults(all,all.length?'':tr('No se encontraron títulos.'));
+    }catch{
+      if(token!==searchSequence||selectedMedia)return;
+      showMediaResults(locals,locals.length?'':tr('La búsqueda externa no está disponible. Prueba otro nombre o añade el título al catálogo.'));
+    }
   }
   function setEditor(open){
     $('blogEditor').hidden=!open;
@@ -149,29 +291,33 @@
   function resetEditor(){
     editingId=null;
     $('blogForm').reset();
+    setMediaKind('series');
     $('blogFormHeading').textContent=tr('Nueva publicación');
     $('blogSave').textContent=tr('Guardar publicación');
     syncTargets();
   }
   function beginEdit(post){
+    const item=getItem(post);
+    if(!item)return;
     editingId=post.id;
     $('blogTitle').value=post.title;
     $('blogExcerpt').value=post.excerpt;
     $('blogBody').value=post.body||'';
     $('blogAuthor').value=post.author;
-    $('blogMedia').value=post.mediaId;
+    setMediaKind(item.type==='movie'?'movie':'series',false);
+    selectedMedia=item;
     $('blogTarget').value=post.target;
-    syncTargets();
-    $('blogSeason').value=String(post.season);
-    syncTargets();
-    $('blogEpisode').value=String(post.episode);
+    $('blogSeason').replaceChildren(new Option(String(post.season),String(post.season)));
+    $('blogEpisode').replaceChildren(new Option(String(post.episode),String(post.episode)));
     $('blogBlogspot').value=post.blogspotUrl;
+    syncTargets();
     $('blogFormHeading').textContent=tr('Editar publicación');
     $('blogSave').textContent=tr('Guardar cambios');
     setEditor(true);
+    loadEpisodeData(item);
     $('blogEditor').scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function onSubmit(event){
+  async function onSubmit(event){
     event.preventDefault();
     const source=clean($('blogBlogspot').value,500);
     if(source&&!safeSource(source)){
@@ -181,11 +327,19 @@
       id:editingId||('local-'+(globalThis.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2))),
       title:$('blogTitle').value,excerpt:$('blogExcerpt').value,body:$('blogBody').value,
       author:$('blogAuthor').value,mediaId:$('blogMedia').value,target:$('blogTarget').value,
+      mediaSnapshot:selectedMedia?{id:selectedMedia.id,title:selectedMedia.title,type:selectedMedia.type,
+        year:selectedMedia.year,tmdb:selectedMedia.tmdb,tvmazeId:selectedMedia.tvmazeId,
+        apiName:selectedMedia.apiName,description:selectedMedia.description,
+        seasons:selectedMedia.seasons,art:selectedMedia.art}:null,
       season:Number($('blogSeason').value)||1,episode:Number($('blogEpisode').value)||1,
       blogspotUrl:source,date:editingId?localPosts.find(x=>x.id===editingId)?.date:new Date().toISOString().slice(0,10)
     };
+    if(!selectedMedia){NT.notify(tr('Primero selecciona una película o serie.'));return}
+    if(clean(raw.body,5000).length<70){NT.notify(tr('El artículo necesita al menos 70 caracteres.'));return}
     const valid=normalizePost(raw);
     if(!valid){NT.notify(tr('Completa el título, resumen y contenido asociado.'));return;}
+    // A remote selection must be saved to the personal catalog before its detail link can resolve.
+    if(!((await NT.loadCatalog()).items.some(x=>x.id===selectedMedia.id)))NT.addCustom(selectedMedia);
     const previous=[...localPosts];
     if(editingId)localPosts=localPosts.map(x=>x.id===editingId?valid:x);
     else localPosts.unshift(valid);
@@ -223,15 +377,17 @@
   async function start(){
     try{
       catalog=(await NT.loadCatalog()).items;
-      const sel=$('blogMedia');
-      sel.replaceChildren(...catalog.map(item=>new Option(item.title+(item.year?' ('+item.year+')':''),item.id)));
       localPosts=readLocal();
-      syncTargets();
+      setMediaKind('series');
       $('blogCompose').addEventListener('click',()=>{if($('blogEditor').hidden)resetEditor();setEditor($('blogEditor').hidden);});
       $('blogCancel').addEventListener('click',()=>{resetEditor();setEditor(false);});
-      $('blogMedia').addEventListener('change',syncTargets);
+      document.querySelectorAll('[data-media-kind]').forEach(button=>button.addEventListener('click',()=>setMediaKind(button.dataset.mediaKind)));
+      $('blogMediaSearch').addEventListener('input',()=>{
+        clearTimeout(searchTimer);
+        searchTimer=setTimeout(runSearch,290);
+      });
       $('blogTarget').addEventListener('change',syncTargets);
-      $('blogSeason').addEventListener('change',syncTargets);
+      $('blogSeason').addEventListener('change',populateChapters);
       $('blogForm').addEventListener('submit',onSubmit);
       $('blogExport').addEventListener('click',exportPosts);
       $('blogSearch').addEventListener('input',render);
