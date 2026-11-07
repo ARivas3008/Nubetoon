@@ -353,3 +353,7 @@ body[data-page="blog"] .site-footer{margin-top:82px}
  .nav-mobile a{font-size:8.5px}
  .nav-mobile a span{font-size:18px}
 }
+
+
+/* Identificación visible de las entradas demostrativas incluidas de fábrica. */
+.blog-demo-badge{position:absolute;top:14px;right:14px;background:rgba(9,12,23,.88);border:1px solid rgba(211,200,254,.3);border-radius:7px;padding:5px 9px;color:#d7c9ff;font-size:10px;font-weight:800;letter-spacing:.035em}

@@ -12,7 +12,8 @@
       "target": "episode",
       "season": 1,
       "episode": 1,
-      "blogspotUrl": ""
+      "blogspotUrl": "",
+      "demo": true
     },
     {
       "id": "editorial-gravity",
@@ -24,7 +25,8 @@
       "target": "detail",
       "season": 1,
       "episode": 1,
-      "blogspotUrl": ""
+      "blogspotUrl": "",
+      "demo": true
     },
     {
       "id": "editorial-avatar",
@@ -36,7 +38,8 @@
       "target": "episode",
       "season": 1,
       "episode": 1,
-      "blogspotUrl": ""
+      "blogspotUrl": "",
+      "demo": true
     }
   ]
 }

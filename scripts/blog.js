@@ -34,6 +34,7 @@
       author:clean(raw.author,60)||'NubeToon',
       date:/^\d{4}-\d{2}-\d{2}$/.test(raw.date)?raw.date:new Date().toISOString().slice(0,10),
       mediaId,target,season,episode,blogspotUrl:url,
+      demo:raw.demo===true,
       scope
     };
   };
@@ -74,6 +75,7 @@
     const img=NT.el('img',{src:NT.imageUrl(item?.poster,item?.art),alt:tr('Carátula de')+' '+item.title,loading:'lazy',decoding:'async'});
     img.addEventListener('error',()=>{img.src=fallbackPoster;},{once:true});
     media.append(img,NT.el('span',{class:'blog-post-kind'},post.target==='episode'?tr('Capítulo'):item.type==='movie'?tr('Película'):tr('Serie')));
+    if(post.demo)media.append(NT.el('span',{class:'blog-demo-badge'},tr('Ejemplo')));
     const text=NT.el('div',{class:'blog-post-body'});
     const meta=NT.el('p',{class:'blog-post-meta'});
     meta.textContent=post.author+' · '+new Intl.DateTimeFormat(dateLocale(),{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}).format(new Date(post.date+'T12:00:00Z'));
